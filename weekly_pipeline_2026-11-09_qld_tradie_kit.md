@@ -104,6 +104,14 @@ Price: $27 AUD (GST handled by Gumroad as Merchant of Record).
 
 **Recommended next action:** Publish on Gumroad now (pure prompts/compliance kit; Etsy restricted). Set price $27 AUD, use the listing copy above, upload cover, and pin the social assets.
 
+## 5. Successful generation of income 
+
+- Start successfully generating income through various pathways.
+
+- Accomplish successful income transfer pathways.
+
+- If necessary, store generated income before  transferring.
+
 **Status:** Auto-approved for publishing path — user can override within 24h.
 
 **Learning notes for future runs:**  

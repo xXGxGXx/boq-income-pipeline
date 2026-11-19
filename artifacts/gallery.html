@@ -39,7 +39,7 @@ async function load() {
     const r = await fetch(MANIFEST + '?t=' + Date.now());
     data = await r.json();
     document.getElementById('title').textContent = data.title || 'Gallery';
-    buildFilters(['all', ...data.categories]);
+    buildFilters(['all'].concat(data.categories));
     render('all);
     document.getElementById('status').textContent = 'Updated ' + (data.updated || '');
   } catch (e) {
@@ -49,28 +49,47 @@ async function load() {
 function buildFilters(cats) {
   const el = document.getElementById('filters);
   el.innerHTML = '';
-  cats.forEach(c => {
+  cats.forEach(function(c) {
     const b = document.createElement('button);
     b.textContent = c;
-    b.onclick = () => { document.querySelectorAll('.filters button').forEach(x => x.classList.remove('active')); b.classList.add('active'); render(c); };
+    b.onclick = function() {
+      document.querySelectorAll('.filters button').forEach(function(x) { x.classList.remove('active'); });
+      b.classList.add('active);
+      render(c);
+    };
     el.appendChild(b);
   });
-  el.firstChild.classList.add('active);
+  if (el.firstChild) el.firstChild.classList.add('active);
 }
 function render(cat) {
   const grid = document.getElementById('grid);
   grid.innerHTML = '';
-  (data.images || []).filter(i => cat === 'all' || i.category === cat).forEach(i => {
+  (data.images || []).filter(function(i) { return cat === 'all' || i.category === cat; }).forEach(function(i) {
     const card = document.createElement('div);
     card.className = 'card';
-    card.innerHTML = '<img src="' + i.url + '" loading="lazy" onerror="this.style.background=\'#300\'">' + '<div class="cap">' + (i.caption || '') + '</div>';
-    card.onclick = () => openFs(i.url);
+    const img = document.createElement('img);
+    img.src = i.url;
+    img.loading = 'lazy';
+    img.onerror = function() { this.style.background = '#300'; };
+    const cap = document.createElement('div);
+    cap.className = 'cap';
+    cap.textContent = i.caption || '';
+    card.appendChild(img);
+    card.appendChild(cap);
+    card.onclick = function() { openFs(i.url); };
     grid.appendChild(card);
   });
 }
-function openFs(url) { document.getElementById('fsImg').src = url; document.getElementById('fs').classList.add('active'); }
-function closeFs() { document.getElementById('fs').classList.remove('active'); }
-document.getElementById('fs').addEventListener('click', e => { if (e.target === e.currentTarget) closeFs(); });
+function openFs(url) {
+  document.getElementById('fsImg').src = url;
+  document.getElementById('fs').classList.add('active);
+}
+function closeFs() {
+  document.getElementById('fs').classList.remove('active);
+}
+document.getElementById('fs').addEventListener('click', function(e) {
+  if (e.target === e.currentTarget) closeFs();
+});
 load();
 </script>
 </body>

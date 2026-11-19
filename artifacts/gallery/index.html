@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expulsion Gallery</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #eee; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  h1 { text-align: center; padding: 20px 0 10px; font-size: 22px; letter-spacing: 2px; }
+  .filters { display: flex; gap: 8px; justify-content: center; padding: 0 12px 16px; flex-wrap: wrap; }
+  .filters button { background: #2a2a2a; color: #ccc; border: 1px solid #3a3a3a; border-radius: 20px; padding: 6px 16px; font-size: 13px; cursor: pointer; }
+  .filters button.active { background: #6a2a9a; color: #fff; border-color: #8a4aba; }
+  .grid { display: flex; flex-direction: column; gap: 16px; padding: 0 12px 40px; max-width: 720px; margin: 0 auto; }
+  .card { background: #161616; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a2a; }
+  .card img { width: 100%; height: auto; display: block; background: #1a1a1a; }
+  .cap { padding: 10px 14px; font-size: 13px; color: #999; }
+  .tag { display: inline-block; background: #2a1a3a; color: #d4a0ff; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 6px; }
+  .status { text-align: center; color: #666; font-size: 12px; padding: 20px; }
+  .fs-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; }
+  .card { position: relative; }
+</style>
+</head>
+<body>
+<h1>EXPULSION GALLERY</h1>
+<div class="filters" id="filters"></div>
+<div class="grid" id="grid"><div class="status">Loading manifest...</div></div>
+<script>
+const MANIFEST_URL = 'https://raw.githubusercontent.com/xXGxGXx/boq-income-pipeline/main/artifacts/gallery-manifest.json';
+let manifest = null;
+let activeCategory = 'all';
+
+async function load() {
+  try {
+    const res = await fetch(MANIFEST_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('Manifest fetch failed: ' + res.status);
+    manifest = await res.json();
+    renderFilters();
+    renderGrid();
+  } catch (e) {
+    document.getElementById('grid').innerHTML = '<div class="status">Manifest unavailable: ' + e.message + '</div>';
+  }
+}
+
+function renderFilters() {
+  const cats = ['all', ...new Set((manifest.images || []).map(i => i.category))];
+  const el = document.getElementById('filters);
+  el.innerHTML = cats.map(c => `<button data-cat="${c}" class="${c === activeCategory ? 'active' : ''}">${c}</button>`).join('');
+  el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    activeCategory = b.dataset.cat;
+    renderFilters();
+    renderGrid();
+  }));
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid);
+  const images = (manifest.images || []).filter(i => activeCategory === 'all' || i.category === activeCategory);
+  if (!images.length) {
+    grid.innerHTML = '<div class="status">No images in this category.</div>';
+    return;
+  }
+  grid.innerHTML = images.map(img => `
+    <div class="card">
+      <button class="fs-btn" onclick="this.closest('.card').classList.toggle('fullscreen')">&#x26F6;</button>
+      <img src="${img.url}" alt="${img.caption}" loading="lazy" onerror="this.alt='Failed to load'">
+      <div class="cap">${(img.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}${img.caption}</div>
+    </div>`).join('');
+}
+
+load();
+</script>
+</body>
+</html>

@@ -291,8 +291,28 @@ function renderWorkspace() {
 }
 
 /* ---------- sheet ---------- */
-function openSheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').classList.add('open'); $('#scrim').classList.add('open'); $('#sheet').scrollTop = 0; }
-function closeSheet() { $('#sheet').classList.remove('open'); $('#scrim').classList.remove('open'); }
+/* ---------- dialogs: focus moves in, Tab stays inside, focus returns to where you were on close ----------
+   The container itself takes focus (not its first button), so Space still means play/pause, not "press Close". */
+const MODALS = [], BEHIND = ['#top', '#main', '#nav', '#fab', '#selbar'];
+function modalIn(el) {
+  if (!el || MODALS.some(m => m.el === el)) return;
+  const top = MODALS[MODALS.length - 1];
+  if (top) top.el.inert = true; else BEHIND.forEach(s => { const b = $(s); if (b) b.inert = true; });
+  MODALS.push({ el, prev: document.activeElement });
+  if (el.tabIndex < 0 && !el.hasAttribute('tabindex')) el.tabIndex = -1;
+  requestAnimationFrame(() => { if (MODALS.some(m => m.el === el) && !el.contains(document.activeElement)) try { el.focus({ preventScroll: true }); } catch (e) { } });
+}
+function modalOut(el) {
+  const i = MODALS.findIndex(m => m.el === el); if (i < 0) return;
+  const m = MODALS.splice(i, 1)[0]; el.inert = false;
+  if (i < MODALS.length) { const up = MODALS[i]; if (!up.prev || el.contains(up.prev)) up.prev = m.prev; return; }   // closed from under another dialog
+  const top = MODALS[MODALS.length - 1];
+  if (top) top.el.inert = false; else BEHIND.forEach(s => { const b = $(s); if (b) b.inert = false; });
+  const back = top && !(m.prev && top.el.contains(m.prev)) ? top.el : m.prev;
+  if (back && back.isConnected && back.getClientRects().length) try { back.focus({ preventScroll: true }); } catch (e) { }
+}
+function openSheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').classList.add('open'); $('#scrim').classList.add('open'); $('#sheet').scrollTop = 0; modalIn($('#sheet')); }
+function closeSheet() { $('#sheet').classList.remove('open'); $('#scrim').classList.remove('open'); modalOut($('#sheet')); }
 
 function itemSheet(it) {
   const tags = tagsOf(it), mine = user.tags[it.id] || [], rating = user.rating[it.id] || 0;

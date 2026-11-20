@@ -7,7 +7,7 @@ function openFeed(list, startId, title) {
   if (V.open) closeViewer();
   closeSheet(); if (PAL.open) closePalette();
   FEED.title = title || 'Scroll'; FEED.open = true;
-  $('#feed').classList.add('open'); document.body.classList.add('feeding'); document.body.style.overflow = 'hidden';
+  $('#feed').classList.add('open'); document.body.classList.add('feeding'); document.body.style.overflow = 'hidden'; modalIn($('#feed'));
   if (!FEED.hist) { FEED.hist = true; afterNav(() => { try { history.pushState({ mh: 'feed' }, ''); } catch (e) { } }); }
   feedRender(list, Math.max(0, list.findIndex(x => x.id === startId)));
 }
@@ -27,7 +27,7 @@ function closeFeed(fromPop) {
   clearTimeout(FEED.timer); clearTimeout(FEED.seenT); if (FEED.obs) FEED.obs.disconnect();
   const sc = $('#fscroll'); $$('video', sc).forEach(v => { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { } }); sc.innerHTML = '';
   FEED.open = false; FEED.list = []; FEED.idx = -1; releaseWake();
-  $('#feed').classList.remove('open'); document.body.classList.remove('feeding'); document.body.style.overflow = '';
+  $('#feed').classList.remove('open'); document.body.classList.remove('feeding'); document.body.style.overflow = ''; modalOut($('#feed'));
   if (FEED.hist && !fromPop) { FEED.hist = false; navBack(); } else FEED.hist = false;
   renderRails(); updateSubtitle(); if (state.tab === 'library') renderChips();
 }

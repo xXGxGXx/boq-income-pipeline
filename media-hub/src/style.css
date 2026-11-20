@@ -467,3 +467,4 @@ body.feeding .toast{bottom:calc(110px + var(--safe-b))}
   .top,.panel,.rail,.chips,.toolbar,.grid{max-width:1200px;margin-left:auto;margin-right:auto}
 }
 
+.viewer:focus,.sheet:focus,.feed:focus{outline:none}

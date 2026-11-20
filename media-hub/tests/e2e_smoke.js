@@ -87,6 +87,27 @@ async function blurKey(page, key) { await page.evaluate(() => document.activeEle
     await page.keyboard.press('Escape'); await sleep(450);
     ok(!(await page.$('#viewer.open')), 'Esc closes the viewer');
 
+    // dialogs: focus moves in, the page behind is inert, Tab stays inside, Space still plays, focus comes back
+    await page.focus('#grid .card[data-id="DEMO-CLIP"]'); await page.keyboard.press('Enter'); await page.waitForSelector('#viewer.open video'); await sleep(150);
+    ok(await page.evaluate(() => document.getElementById('viewer').contains(document.activeElement)), 'opening the viewer moves keyboard focus into it');
+    ok(await page.evaluate(() => document.getElementById('main').inert && document.getElementById('nav').inert), 'the page behind the viewer is inert');
+    for (let i = 0; i < 25; i++) await page.keyboard.press('Tab');
+    ok(await page.evaluate(() => document.getElementById('viewer').contains(document.activeElement)), 'Tab stays inside the viewer');
+    await page.evaluate(() => document.getElementById('viewer').focus());
+    const p0 = await page.$eval('#viewer video', v => v.paused); await page.keyboard.press(' '); await sleep(300);
+    ok(!!(await page.$('#viewer.open')) && (await page.$eval('#viewer video', v => v.paused)) !== p0, 'Space toggles play/pause (it does not press a focused Close button)');
+    await page.click('#vInfo'); await page.waitForSelector('#sheet.open'); await sleep(150);
+    ok(await page.evaluate(() => document.getElementById('sheet').contains(document.activeElement) && document.getElementById('viewer').inert), 'details sheet over the viewer takes focus; the viewer behind it is inert');
+    await page.keyboard.press('Escape'); await sleep(450);
+    if (await page.$('#sheet.open')) await page.evaluate(() => closeSheet());
+    ok(await page.evaluate(() => !document.getElementById('viewer').inert && document.getElementById('viewer').contains(document.activeElement)), 'closing the sheet gives focus back to the viewer');
+    await page.keyboard.press('Escape'); await sleep(450); if (await page.$('#viewer.open')) await page.evaluate(() => closeViewer());
+    ok(await page.evaluate(() => document.activeElement && document.activeElement.dataset.id === 'DEMO-CLIP' && !document.getElementById('main').inert), 'closing the viewer returns focus to the card it was opened from');
+
+    // app link (from the Perplexity draft, with a demo code)
+    await page.goto(base + '?open=DEMO-01'); await page.waitForSelector('#viewer.open', { timeout: 8000 }).then(() => ok(true, 'app link ?open=DEMO-01 opens the viewer'), () => ok(false, 'app link ?open=DEMO-01 opens the viewer'));
+    await page.goto(base); await page.waitForFunction(n => document.querySelectorAll('#grid .card').length >= n, N);
+
     // favourite survives reload
     await page.click('#grid .card[data-id="DEMO-03"] .favbtn'); await sleep(50);   // reload well inside the 400 ms save delay
     await page.goto(base); await page.waitForFunction(n => document.querySelectorAll('#grid .card').length >= n, N);

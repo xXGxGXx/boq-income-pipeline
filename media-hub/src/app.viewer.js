@@ -12,7 +12,7 @@ function openViewer(id, list) {
   V.list = (list && list.length ? list : [it]).filter(Boolean);
   V.idx = V.list.findIndex(x => x.id === id);
   if (V.idx < 0) { V.list = [it]; V.idx = 0; }
-  vEl().classList.add('open'); V.open = true; document.body.style.overflow = 'hidden'; document.body.classList.add('viewing');
+  vEl().classList.add('open'); V.open = true; document.body.style.overflow = 'hidden'; document.body.classList.add('viewing'); modalIn(vEl());
   if (!V.hist) { V.hist = true; afterNav(() => { try { history.pushState({ mh: 'viewer' }, ''); } catch (e) { } }); }
   drawItem();
 }
@@ -22,7 +22,7 @@ function closeViewer(fromPop) {
   V.open = false; vEl().classList.remove('open', 'theatre', 'idle'); document.body.style.overflow = ''; document.body.classList.remove('viewing');
   if (document.fullscreenElement) document.exitFullscreen().catch(() => { });
   if (V.hist && !fromPop) { V.hist = false; navBack(); } else V.hist = false;
-  closeSheet(); renderRails(); updateSubtitle(); if (state.tab === 'library') renderChips();
+  closeSheet(); modalOut(vEl()); renderRails(); updateSubtitle(); if (state.tab === 'library') renderChips();
 }
 window.addEventListener('popstate', () => { if (NAV.self) return; if (V.open) { V.hist = false; closeViewer(true); } });
 

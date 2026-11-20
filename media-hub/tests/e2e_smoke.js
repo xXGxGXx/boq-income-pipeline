@@ -173,6 +173,15 @@ async function blurKey(page, key) { await page.evaluate(() => document.activeEle
     await pp.goto(base); await pp.waitForFunction(n => document.querySelectorAll('#grid .card').length >= n, N, { timeout: 15000 });
     ok(true, 'phone grid renders');
     ok(await pp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no sideways scrolling on the phone');
+    const kept = await pp.evaluate(async () => { window.scrollTo({ top: 900, behavior: 'instant' }); renderLibrary(); await loadServerLibrary(true); await new Promise(r => setTimeout(r, 300)); return scrollY; });
+    ok(Math.abs(kept - 900) < 60, 'a library refresh keeps your scroll position (it jumped back up to the filter chips; got ' + kept + ')');
+    await pp.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })); await sleep(150);
+    await pp.evaluate(() => window.scrollTo({ top: 900, behavior: 'instant' })); await sleep(350);
+    const tucked = await pp.evaluate(() => document.getElementById('fab').classList.contains('tuck'));
+    await pp.evaluate(() => window.scrollTo({ top: 500, behavior: 'instant' })); await sleep(350);
+    const back = await pp.evaluate(() => !document.getElementById('fab').classList.contains('tuck'));
+    await pp.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })); await sleep(200);
+    ok(tucked && back, 'floating buttons step aside on scroll down and return on scroll up (they covered the cards\u2019 \u2605)');
     await shot(pp, 'phone-home');
     await pp.tap('#grid .card[data-id="DEMO-04"]'); await pp.waitForSelector('#viewer.open');
     ok(true, 'tap opens the viewer on the phone'); await shot(pp, 'phone-viewer');

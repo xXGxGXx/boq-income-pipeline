@@ -130,7 +130,8 @@ function renderChips() {
     b.onclick = () => { state.filter = f; state.cat = f === 'cat' ? c : null; state.col = f === 'col' ? c : null; renderLibrary(); };
     el.appendChild(b);
   });
-  const act = $('[aria-pressed="true"]', el); if (act && el.scrollWidth > el.clientWidth) act.scrollIntoView({ inline: 'center', block: 'nearest' });
+  // centre the active chip by scrolling the chip row only: scrollIntoView also scrolled the whole page up to the chips on every refresh
+  const act = $('[aria-pressed="true"]', el); if (act && el.scrollWidth > el.clientWidth) el.scrollLeft = act.offsetLeft - el.offsetLeft - (el.clientWidth - act.offsetWidth) / 2;
 }
 function railEl(title, items, opts = {}) {
   const w = document.createElement('div'); w.className = 'rail';
@@ -293,6 +294,18 @@ function renderWorkspace() {
 /* ---------- sheet ---------- */
 /* ---------- dialogs: focus moves in, Tab stays inside, focus returns to where you were on close ----------
    The container itself takes focus (not its first button), so Space still means play/pause, not "press Close". */
+/* the floating buttons step aside while you scroll down (on phones they sat on top of the cards' ★) and come back when you scroll up */
+(() => {
+  let last = 0, raf = 0;
+  addEventListener('scroll', () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0; const y = scrollY, f = $('#fab'); if (!f) return;
+      if (y < 160 || y < last - 6 || f.contains(document.activeElement)) f.classList.remove('tuck'); else if (y > last + 6) f.classList.add('tuck');
+      last = y;
+    });
+  }, { passive: true });
+})();
 const MODALS = [], BEHIND = ['#top', '#main', '#nav', '#fab', '#selbar'];
 function modalIn(el) {
   if (!el || MODALS.some(m => m.el === el)) return;

@@ -1,4 +1,4 @@
-# Media Hub · Personal (v2.2)
+# Media Hub · Personal (v2.3)
 
 A private, offline-first media library that behaves like an app. One page of plain HTML/CSS/JS: no accounts, no tracking, no network calls unless you turn something on. Every kind of personal media is treated the same way: nothing is judged, hidden or filtered for its content.
 
@@ -20,6 +20,13 @@ This folder holds the **app only**. Your media, catalog and builds stay on your 
 3. Host the folder over https on a private server you control; it is static.
 
 ## What's new
+**2.3** (merges the two separate 2.2 builds)
+- Fixed: on phones, any refresh (phone folders arriving, an import, filing) threw you back up to the filter chips. Only the chip row scrolls now.
+- Fixed: the floating Shuffle and + buttons sat on top of the right-hand column's ★ on phones; they step aside while you scroll down.
+- Accessibility: the viewer, details sheet and Scroll feed now take keyboard and screen-reader focus, keep Tab inside, and give focus back to where you were. Space still plays and pauses.
+- Server: only the app's own page files and photos, videos and audio are served; a stray `.env`, `.zip`, `.txt` or key file in the app folder is refused.
+- Tests: `tests/checklist.py` (40-line checklist with a Markdown report) and `tests/test_media_serve.py` (21 server cases) join the unit tests and the browser test.
+
 **2.2**
 - Source tree recovered from the 2.1 build (the 2.0 zip's `src/` was out of date), so 2.1 can be rebuilt and changed again.
 - Fixed: a favourite, rating, note or other change made in the last moment before closing, reloading or switching away from the app was lost (saves were delayed 400 ms and never flushed). Pending saves now flush when the page is hidden or closed, and IndexedDB writes commit at once.
@@ -90,8 +97,11 @@ Every media file is re-hashed after copying; the build stops if one byte differs
 ## Tests
 ```
 python3 -m unittest tests/test_range.py tests/test_optimize.py tests/test_library.py   # server, Range, path safety, optimizer, phone folders
-node tests/e2e_smoke.js dist [--shots DIR]                                            # after building the demo; needs Playwright + Chromium
+python3 -m pytest tests/test_media_serve.py                                           # 21 server cases (pip install pytest)
+node tests/e2e_smoke.js dist [--shots DIR]                                            # browser test; needs Node Playwright + Chromium
+python3 tests/checklist.py --report checklist-report.md                               # 40-line checklist; needs Python Playwright
 ```
+Run the last two after building the demo. Everything uses synthetic files on 127.0.0.1; your media is never touched.
 
 ## Notes & limits
 - Linking folders in place needs the File System Access API (Chrome/Edge on a computer). Elsewhere “Link a folder” copies the folder in, or use phone folders through the companion server. After a restart the browser may ask once to allow access again.

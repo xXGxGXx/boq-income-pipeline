@@ -122,7 +122,7 @@ def main():
              {"path": "Phone/Pictures/Screenshots", "files": 48, "size": 23456789, "note": ""}]
     ws = [{"id": "ws-1", "title": "Trip packing list", "collection": "Notes", "type": "NOTE", "size": 210, "file": "packing.txt", "path": "notes/packing.txt", "filed": "", "note": "", "tags": ["travel"], "sha256": "", "text": "Passport\nCharger\nCamera"},
           {"id": "ws-2", "title": "Camera settings", "collection": "Reference", "type": "FILE", "size": 4096, "file": "settings.pdf", "path": "ref/settings.pdf", "filed": "", "note": "Example", "tags": [], "sha256": ""}]
-    meta = {"version": "2.2-demo", "built": time.strftime("%Y-%m-%d"), "count": len(items), "local": sum(1 for p in plan if not p.get("derived")), "mirrorSource": "synthetic demo (tools/make_demo.py)",
+    meta = {"version": "2.3-demo", "built": time.strftime("%Y-%m-%d"), "count": len(items), "local": sum(1 for p in plan if not p.get("derived")), "mirrorSource": "synthetic demo (tools/make_demo.py)",
             "workspaceSource": "demo workspace (%d items)" % len(ws), "vaultSnapshot": "demo snapshot", "cloud": [{"name": "Example cloud folder", "url": "https://example.com/folder"}]}
     json.dump({"meta": meta, "items": items, "vault": vault, "workspace": {"items": ws}}, open(os.path.join(out, "catalog.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     json.dump({"mirror": out, "media": plan}, open(os.path.join(out, "media_plan.json"), "w"), indent=1)

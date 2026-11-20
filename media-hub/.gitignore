@@ -1,0 +1,15 @@
+# Your library never goes in git: media, catalogs and builds stay on your own devices.
+media/
+build/
+dist/
+mirror/
+private/
+*.zip
+catalog.json
+media_plan.json
+media_catalog.tsv
+playable-report.json
+*.standalone.html
+media-hub-standalone.html
+__pycache__/
+.media-serve.log

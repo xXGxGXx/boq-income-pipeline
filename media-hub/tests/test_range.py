@@ -14,7 +14,8 @@ class ServerCase(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory(); root = Path(cls.tmp.name) / "site"; root.mkdir()
         (root / "index.html").write_text("<!doctype html><title>x</title>")
-        (root / "media").mkdir(); (root / "media" / "clip.mp4").write_bytes(DATA); (root / "media" / "tiny.bin").write_bytes(b"0123456789")
+        (root / "media").mkdir(); (root / "media" / "clip.mp4").write_bytes(DATA); (root / "media" / "tiny.mp4").write_bytes(b"0123456789")
+        for junk in ("notes.txt", "README.md", "secrets.env", "backup.zip", "data.db", "key.pem", "noext"): (root / junk).write_text("NOT MEDIA")
         (root / ".secret").write_text("hidden"); (root / "tool.py").write_text("print(1)")
         outside = Path(cls.tmp.name) / "outside.txt"; outside.write_text("TOP SECRET")
         os.symlink(outside, root / "media" / "link.txt"); os.symlink(Path(cls.tmp.name), root / "linkdir")
@@ -37,26 +38,26 @@ class TestRange(ServerCase):
         self.assertEqual(r.getheader("Accept-Ranges"), "bytes"); self.assertEqual(r.getheader("Content-Type"), "video/mp4")
 
     def test_simple_range(self):
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=2-5"})
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=2-5"})
         self.assertEqual((r.status, b), (206, b"2345")); self.assertEqual(r.getheader("Content-Range"), "bytes 2-5/10"); self.assertEqual(r.getheader("Content-Length"), "4")
 
     def test_open_ended(self):
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=7-"}); self.assertEqual((r.status, b), (206, b"789")); self.assertEqual(r.getheader("Content-Range"), "bytes 7-9/10")
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=7-"}); self.assertEqual((r.status, b), (206, b"789")); self.assertEqual(r.getheader("Content-Range"), "bytes 7-9/10")
 
     def test_suffix(self):
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=-4"}); self.assertEqual((r.status, b), (206, b"6789"))
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=-99"}); self.assertEqual((r.status, b), (206, b"0123456789"))
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=-4"}); self.assertEqual((r.status, b), (206, b"6789"))
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=-99"}); self.assertEqual((r.status, b), (206, b"0123456789"))
 
     def test_end_past_eof_is_clamped(self):
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=8-999"}); self.assertEqual((r.status, b), (206, b"89")); self.assertEqual(r.getheader("Content-Range"), "bytes 8-9/10")
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=8-999"}); self.assertEqual((r.status, b), (206, b"89")); self.assertEqual(r.getheader("Content-Range"), "bytes 8-9/10")
 
     def test_unsatisfiable(self):
         for rng in ("bytes=10-", "bytes=50-60", "bytes=-0", "bytes=5-2"):
-            r, b = self.req("GET", "/media/tiny.bin", {"Range": rng}); self.assertEqual(r.status, 416, rng); self.assertEqual(r.getheader("Content-Range"), "bytes */10"); self.assertEqual(b, b"")
+            r, b = self.req("GET", "/media/tiny.mp4", {"Range": rng}); self.assertEqual(r.status, 416, rng); self.assertEqual(r.getheader("Content-Range"), "bytes */10"); self.assertEqual(b, b"")
 
     def test_multi_range_and_junk_are_ignored(self):
         for rng in ("bytes=0-1,4-5", "items=0-1", "bytes=", "bytes=a-b"):
-            r, b = self.req("GET", "/media/tiny.bin", {"Range": rng}); self.assertEqual((r.status, b), (200, b"0123456789"), rng)
+            r, b = self.req("GET", "/media/tiny.mp4", {"Range": rng}); self.assertEqual((r.status, b), (200, b"0123456789"), rng)
 
     def test_range_across_chunk_boundaries_is_byte_exact(self):
         a, z = 1024 * 1024 - 17, 2 * 1024 * 1024 + 4099
@@ -67,13 +68,13 @@ class TestRange(ServerCase):
 
     def test_head_has_headers_and_no_body(self):
         r, b = self.req("HEAD", "/media/clip.mp4"); self.assertEqual((r.status, b), (200, b"")); self.assertEqual(r.getheader("Content-Length"), str(len(DATA)))
-        r, b = self.req("HEAD", "/media/tiny.bin", {"Range": "bytes=0-3"}); self.assertEqual((r.status, b), (206, b"")); self.assertEqual(r.getheader("Content-Length"), "4")
+        r, b = self.req("HEAD", "/media/tiny.mp4", {"Range": "bytes=0-3"}); self.assertEqual((r.status, b), (206, b"")); self.assertEqual(r.getheader("Content-Length"), "4")
 
     def test_etag_and_conditional(self):
-        r, _ = self.req("GET", "/media/tiny.bin"); et = r.getheader("ETag"); self.assertTrue(et)
-        r, b = self.req("GET", "/media/tiny.bin", {"If-None-Match": et}); self.assertEqual((r.status, b), (304, b""))
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=0-1", "If-Range": et}); self.assertEqual((r.status, b), (206, b"01"))
-        r, b = self.req("GET", "/media/tiny.bin", {"Range": "bytes=0-1", "If-Range": '"stale"'}); self.assertEqual((r.status, b), (200, b"0123456789"))
+        r, _ = self.req("GET", "/media/tiny.mp4"); et = r.getheader("ETag"); self.assertTrue(et)
+        r, b = self.req("GET", "/media/tiny.mp4", {"If-None-Match": et}); self.assertEqual((r.status, b), (304, b""))
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=0-1", "If-Range": et}); self.assertEqual((r.status, b), (206, b"01"))
+        r, b = self.req("GET", "/media/tiny.mp4", {"Range": "bytes=0-1", "If-Range": '"stale"'}); self.assertEqual((r.status, b), (200, b"0123456789"))
 
 
 class TestSafety(ServerCase):
@@ -86,11 +87,15 @@ class TestSafety(ServerCase):
 
     def test_traversal_variants_are_refused(self):
         for p in ("/../outside.txt", "/%2e%2e/outside.txt", "/media/../../outside.txt", "/media/%2e%2e%2f%2e%2e%2foutside.txt", "/%2e%2e%2foutside.txt",
-                  "//etc/passwd", "/media/..%5c..%5coutside.txt", "/media/\\..\\x", "/media/tiny.bin%00.png", "/%252e%252e/outside.txt", "/media/%c0%ae%c0%ae/x"):
+                  "//etc/passwd", "/media/..%5c..%5coutside.txt", "/media/\\..\\x", "/media/tiny.mp4%00.png", "/%252e%252e/outside.txt", "/media/%c0%ae%c0%ae/x"):
             r, b = self.req("GET", p); self.assertIn(r.status, (400, 404), p); self.assertNotIn(b"TOP SECRET", b)
 
     def test_symlinks_are_refused(self):
         for p in ("/media/link.txt", "/linkdir/outside.txt", "/linkdir"): r, b = self.req("GET", p); self.assertEqual(r.status, 404, p); self.assertNotIn(b"TOP SECRET", b)
+
+    def test_only_app_files_and_media_are_served(self):
+        for p in ("/notes.txt", "/README.md", "/secrets.env", "/backup.zip", "/data.db", "/key.pem", "/noext"): r, b = self.req("GET", p); self.assertEqual(r.status, 404, p); self.assertNotIn(b"NOT MEDIA", b)
+        for p in ("/", "/index.html", "/media/tiny.mp4"): r, _ = self.req("GET", p); self.assertEqual(r.status, 200, p)
 
     def test_dotfiles_dirs_and_scripts_are_hidden(self):
         for p in ("/.secret", "/tool.py", "/media/", "/media", "/nope"): r, b = self.req("GET", p); self.assertEqual(r.status, 404, p)
@@ -104,10 +109,10 @@ class TestSafety(ServerCase):
         r, _ = self.req("GET", "/", host="localhost:%d" % self.port); self.assertEqual(r.status, 200)
 
     def test_origin_and_fetch_site(self):
-        r, _ = self.req("GET", "/media/tiny.bin", {"Origin": "https://evil.test"}); self.assertEqual(r.status, 403)
-        r, _ = self.req("GET", "/media/tiny.bin", {"Origin": "http://127.0.0.1:%d" % self.port}); self.assertEqual(r.status, 200)
-        for site in ("cross-site", "same-site"): r, _ = self.req("GET", "/media/tiny.bin", {"Sec-Fetch-Site": site}); self.assertEqual(r.status, 403, site)
-        for site in ("same-origin", "none"): r, _ = self.req("GET", "/media/tiny.bin", {"Sec-Fetch-Site": site}); self.assertEqual(r.status, 200, site)
+        r, _ = self.req("GET", "/media/tiny.mp4", {"Origin": "https://evil.test"}); self.assertEqual(r.status, 403)
+        r, _ = self.req("GET", "/media/tiny.mp4", {"Origin": "http://127.0.0.1:%d" % self.port}); self.assertEqual(r.status, 200)
+        for site in ("cross-site", "same-site"): r, _ = self.req("GET", "/media/tiny.mp4", {"Sec-Fetch-Site": site}); self.assertEqual(r.status, 403, site)
+        for site in ("same-origin", "none"): r, _ = self.req("GET", "/media/tiny.mp4", {"Sec-Fetch-Site": site}); self.assertEqual(r.status, 200, site)
 
     def test_refuses_non_loopback_bind(self):
         for h in ("0.0.0.0", "192.168.0.10", "example.com", ""):

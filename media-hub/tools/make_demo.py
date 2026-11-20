@@ -99,11 +99,11 @@ def main():
                  ("DEMO-VERT", "Vertical gradient (WebM)", "webm", ["-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "40", "-deadline", "realtime", "-c:a", "libopus"], "video/webm", "360x640")]
         for code, title, ext, enc, mime, size in clips:
             rel = "media/%s.%s" % (code, ext); p = os.path.join(out, rel)
-            cmd = ["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "lavfi", "-i", "gradients=s=%s:d=6:speed=0.03:r=24" % size, "-f", "lavfi", "-i", "sine=frequency=440:duration=6", "-shortest"] + enc + [p]
+            cmd = ["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "lavfi", "-i", "gradients=s=%s:d=12:speed=0.03:r=24" % size, "-f", "lavfi", "-i", "sine=frequency=440:duration=12", "-shortest"] + enc + [p]
             if subprocess.run(cmd).returncode or not os.path.exists(p): print("  skipped", code, "(this ffmpeg lacks the encoder)"); continue
             w, h = size.split("x")
             it = {"id": code, "code": code, "title": title, "kind": "video", "category": "Clips", "source": "Camera", "res": "%s×%s" % (w, h), "tags": ["clip", "vertical"] if int(h) > int(w) else ["clip"],
-                  "link": "", "added": now - 7200000, "desc": "Synthetic six-second gradient clip with a test tone."}
+                  "link": "", "added": now - 7200000, "desc": "Synthetic twelve-second gradient clip with a test tone."}
             d = local(it, rel, mime); it.update(local=rel, mime=mime, bytes=d["bytes"], sha256=d["sha256"])
             prel = "media/posters/%s.jpg" % code
             if not subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-ss", "1", "-i", p, "-frames:v", "1", "-q:v", "4", os.path.join(out, prel)]).returncode:

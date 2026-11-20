@@ -10,6 +10,8 @@ What it enforces
   * binds only to 127.0.0.1 / ::1 / localhost (anything else is refused)
   * serves only files inside --dir: percent-decoded ONCE, rejects "..", NUL, backslashes, dotfiles, any symlink in the
     path, and anything whose real path leaves the base directory; no directory listings
+  * allow-list: only the app's own page files (.html .js .css .json .webmanifest .svg .ico .woff2) and photo, video and
+    audio files are served; scripts, text, archives, databases, keys and anything without an extension are refused
   * Host must be a loopback name (DNS-rebinding defence); Origin, when sent, must be this server; Sec-Fetch-Site
     must be same-origin or none
   * GET and HEAD only; ETag / If-None-Match / If-Range; Accept-Ranges with 206/416, open-ended and suffix ranges,
@@ -27,6 +29,7 @@ from pathlib import Path
 CHUNK = 1024 * 1024
 LOOPBACK = {"127.0.0.1", "::1", "localhost"}
 DENY_SUFFIX = {".py", ".pyc", ".sh", ".tsv"}
+APP_SUFFIX = {".html", ".js", ".css", ".json", ".webmanifest", ".svg", ".ico", ".woff2"}   # the app's own files; everything else must be media
 TYPES = {".webmanifest": "application/manifest+json", ".js": "text/javascript; charset=utf-8", ".html": "text/html; charset=utf-8",
          ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".mp4": "video/mp4", ".m4v": "video/mp4",
          ".webm": "video/webm", ".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif",
@@ -76,6 +79,8 @@ def resolve_child(base: Path, url_path: str, media_only=False):
     if real.suffix.lower() in DENY_SUFFIX:
         return None
     if media_only and (real.suffix.lower() not in MEDIA_KIND or not real.is_file()):
+        return None
+    if real.suffix.lower() not in APP_SUFFIX and real.suffix.lower() not in MEDIA_KIND:   # allow-list: no .env, .zip, .db, .md, .txt, keys, archives …
         return None
     return real
 

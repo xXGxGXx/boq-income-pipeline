@@ -60,6 +60,18 @@ class Loading(unittest.TestCase):
             self.assertIn(msg, str(cm.exception))
 
 
+class RetryAfter(unittest.TestCase):
+    def test_seconds_dates_junk_and_cap(self):
+        f = orch.retry_after_seconds
+        self.assertEqual(f("0"), 0.0)                       # "wait 0" means 0, not "use the backoff"
+        self.assertEqual(f("7"), 7.0)
+        self.assertEqual(f(format_datetime(datetime.now(timezone.utc) - timedelta(seconds=9), usegmt=True)), 0.0)
+        self.assertAlmostEqual(f(format_datetime(datetime.now(timezone.utc) + timedelta(seconds=30), usegmt=True)), 30, delta=2)
+        self.assertEqual(f("99999"), orch.MAX_RETRY_AFTER)
+        for junk in (None, "", "soon", "-"):
+            self.assertIsNone(f(junk))
+
+
 class Http(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         orch.GROK_API_KEY, orch.MUSE_API_KEY, orch.MUSE_API_URL = "test-key", "test-key", "https://muse.invalid/v1"

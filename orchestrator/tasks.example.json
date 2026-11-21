@@ -15,6 +15,7 @@
       "task_type": "realtime",
       "provider": "grok",
       "timeout": 120,
+      "priority": 3,
       "context": {"region": "Brisbane, Queensland, Australia", "max_tokens": 1800}
     },
     {
@@ -23,6 +24,7 @@
       "task_type": "creative",
       "provider": "muse",
       "timeout": 180,
+      "priority": 5,
       "context": {"media": "text", "mode": "campaign"}
     }
   ]

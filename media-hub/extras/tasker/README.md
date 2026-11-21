@@ -23,7 +23,7 @@ Tasker: *Net → Browse URL* with `http://127.0.0.1:8765/?open=%code`.
 
 ## 3. Tasker WebView player (`media_hub_webview.html`)
 A small player for a Scenes V2 **WebView** element, for when you want a floating overlay instead of the full app.
-- Set `%clip_url` (`file:///sdcard/…mp4`, `content://…`, `https://…` or `http://127.0.0.1:…`), optionally `%safe_title` and `%playlist_json` (`[{"url":"…","title":"…"}, …]`).
+- Set `%clip_url` (`file:///sdcard/…mp4`, `content://…`, `https://…` or `http://127.0.0.1:…`), optionally `%safe_title` and `%playlist_json` (`[{"url":"…","title":"…"}, …]`). <!-- privacy-scan: ok (example path) -->
 - Values are read as plain text (never as HTML), and only local, content, https or this-phone addresses are played.
 - Resume position is remembered per clip; double-tap left/right seeks 10 s; Prev/Next walk the playlist.
 - With the WebView's **JavaScript Interface** on, ✕ runs your task named `Media Hub Close`. Tasker can also call `mediaHub.play(url, title)`, `mediaHub.next()`, `mediaHub.prev()` with *Run JavaScript*.

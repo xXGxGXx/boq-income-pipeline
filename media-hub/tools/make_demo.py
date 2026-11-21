@@ -25,7 +25,7 @@ PICS = [  # code, title, category, w, h, hue, tags, source
 LINKS = [  # code, title, kind, category, link, tags
     ("WEB-01", "Example clip on the web", "video", "Web saves", "https://example.com/clips/one", ["web"]),
     ("WEB-02", "Example picture on the web", "image", "Web saves", "https://example.org/pictures/two.jpg", ["web"]),
-    ("DRV-01", "Drive clip (placeholder id)", "video", "Drive", "https://drive.google.com/file/d/DEMO_PLACEHOLDER_ID_0001/view", ["drive"]),
+    ("DRV-01", "Drive clip (placeholder id)", "video", "Drive", "https://drive.google.com/file/d/DEMO_PLACEHOLDER_ID_0001/view", ["drive"]),   # privacy-scan: ok (synthetic placeholder)
 ]
 
 

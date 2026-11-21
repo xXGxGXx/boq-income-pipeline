@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>Media Hub · Player</title>
+<!-- Elevated Tasker player (Master Edition). Tasker fills the three textareas below; they are read as plain text, never as HTML.
+     Only file://, content://, https:// and this phone's own server (127.0.0.1) are played. -->
+<style>
+  :root{
+    --accent:#67d0f7; --ink:#eef3fa; --muted:#9fb0c6; --danger:#ff7a7a;
+    --bg:#000; --surface:rgba(20,28,42,.72);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Roboto,sans-serif;overflow:hidden}
+  #stage{position:absolute;inset:0;display:grid;place-items:center}
+  video{width:100%;height:100%;object-fit:contain;background:#000}
+  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px));pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,transparent 28%,transparent 62%,rgba(0,0,0,.6) 100%);opacity:1;transition:opacity .35s}
+  #overlay.hidden{opacity:0;pointer-events:none}
+  #top{display:flex;align-items:center;gap:10px;pointer-events:auto}
+  #title{flex:1;min-width:0;font-weight:650;font-size:.98rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+  #pos{color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  #msg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);color:var(--muted);font-size:.9rem;text-align:center;pointer-events:none;max-width:80%}
+  #seekwrap{pointer-events:auto;padding:0 2px}
+  input[type=range]{width:100%;accent-color:var(--accent);height:4px;margin:0;appearance:none;background:rgba(255,255,255,.18);border-radius:4px}
+  input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(0,0,0,.25)}
+  #bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;pointer-events:auto}
+  button{background:var(--surface);color:#fff;border:0;border-radius:14px;min-width:52px;min-height:46px;padding:0 14px;font:600 .92rem system-ui,sans-serif;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:.12s}
+  button:active{transform:scale(.94)}
+  button.main{background:var(--accent);color:#06121a;min-width:68px;font-weight:700}
+  #gest{position:absolute;inset:0;pointer-events:none}
+  .flash{position:absolute;top:50%;width:72px;height:72px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center;font-size:1.4rem;transform:translateY(-50%) scale(.6);opacity:0;transition:opacity .25s,transform .25s}
+  .flash.show{opacity:1;transform:translateY(-50%) scale(1)}
+  #gest .l{left:18%}
+  #gest .r{right:18%}
+</style>
+</head>
+<body>
+<textarea id="v-title" hidden>%safe_title</textarea>
+<textarea id="v-url" hidden>%clip_url</textarea>
+<textarea id="v-list" hidden>%playlist_json</textarea>
+
+<div id="stage">
+  <video id="player" playsinline preload="metadata"></video>
+  <div id="msg"></div>
+  <div id="gest"><div class="flash l" id="fl">−10</div><div class="flash r" id="fr">+10</div></div>
+</div>
+<div id="overlay">
+  <div id="top"><div id="title">Media Hub</div><div id="pos">0:00</div></div>
+  <div id="seekwrap"><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek"></div>
+  <div id="bar">
+    <button id="prev" aria-label="Previous">⏮</button>
+    <button id="back" aria-label="Back 10 seconds">−10</button>
+    <button id="play" class="main" aria-label="Play or pause">▶</button>
+    <button id="fwd" aria-label="Forward 10 seconds">+10</button>
+    <button id="next" aria-label="Next">⏭</button>
+    <button id="speed" aria-label="Speed">1×</button>
+    <button id="close" aria-label="Close">✕</button>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id), v = $('player'), ov = $('overlay');
+  const read = id => { const t = ($(id).value || '').trim(); return /^%[a-z_0-9]+$/i.test(t) ? '' : t; };
+  const safe = u => { try { const x = new URL(u, location.href); return ['file:', 'content:', 'https:', 'blob:'].includes(x.protocol) || (x.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(x.hostname)); } catch (e) { return false; } };
+  let list = [];
+  try { const j = JSON.parse(read('v-list') || '[]'); if (Array.isArray(j)) list = j.map(x => typeof x === 'string' ? { url: x, title: '' } : { url: String(x.url || x.clip_url || ''), title: String(x.title || '') }).filter(x => x.url); } catch (e) { }
+  const first = read('v-url'); if (first && !list.some(x => x.url === first)) list.unshift({ url: first, title: read('v-title') });
+  let i = 0, hideTimer = 0, lastTap = 0;
+  const SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.5, 0.75];
+  const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  const key = () => 'mhwv:' + (list[i] || {}).url;
+  function showOverlay() { ov.classList.remove('hidden'); clearTimeout(hideTimer); if (!v.paused) hideTimer = setTimeout(() => ov.classList.add('hidden'), 2800); }
+  function load(n) {
+    if (!list.length) { $('msg').textContent = 'No clip. Set %clip_url (and optionally %safe_title or %playlist_json) in Tasker.'; return; }
+    i = (n + list.length) % list.length; const it = list[i];
+    $('title').textContent = it.title || decodeURIComponent(it.url.split('/').pop() || 'Clip');
+    if (!safe(it.url)) { $('msg').textContent = 'Blocked: only file://, content://, https:// or this phone (127.0.0.1) are allowed.'; return; }
+    $('msg').textContent = list.length > 1 ? (i + 1) + ' of ' + list.length : '';
+    v.src = it.url; v.play().catch(() => { $('play').textContent = '▶'; });
+    showOverlay();
+  }
+  v.addEventListener('loadedmetadata', () => { const t = +localStorage.getItem(key()) || 0; if (t > 2 && t < v.duration - 5) v.currentTime = t; });
+  v.addEventListener('timeupdate', () => { $('pos').textContent = fmt(v.currentTime) + ' / ' + fmt(v.duration); if (v.duration) $('seek').value = v.currentTime / v.duration * 1000; if (Math.floor(v.currentTime) % 4 === 0) try { localStorage.setItem(key(), v.currentTime); } catch (e) { } });
+  v.addEventListener('play', () => { $('play').textContent = '⏸'; showOverlay(); });
+  v.addEventListener('pause', () => { $('play').textContent = '▶'; ov.classList.remove('hidden'); clearTimeout(hideTimer); });
+  v.addEventListener('ended', () => { try { localStorage.removeItem(key()); } catch (e) { } if (list.length > 1) load(i + 1); });
+  v.addEventListener('error', () => { $('msg').textContent = 'This clip could not be played here. A playable copy (optimize_media.py) usually fixes it.'; });
+  $('seek').addEventListener('input', e => { if (v.duration) v.currentTime = e.target.value / 1000 * v.duration; showOverlay(); });
+  $('play').onclick = () => { if (v.paused) v.play().catch(() => { }); else v.pause(); showOverlay(); };
+  $('back').onclick = () => { v.currentTime = Math.max(0, v.currentTime - 10); showOverlay(); };
+  $('fwd').onclick = () => { v.currentTime = Math.min(v.duration || 1e9, v.currentTime + 10); showOverlay(); };
+  $('prev').onclick = () => load(i - 1); $('next').onclick = () => load(i + 1);
+  $('speed').onclick = e => { const s = SPEEDS[(SPEEDS.indexOf(v.playbackRate) + 1) % SPEEDS.length]; v.playbackRate = s; e.target.textContent = s + '×'; showOverlay(); };
+  $('close').onclick = () => { v.pause(); if (typeof performTask === 'function') performTask('Media Hub Close', 10, '', ''); else if (history.length > 1) history.back(); };
+  // Double-tap left/right for ±10, single tap toggles overlay
+  $('stage').addEventListener('click', e => {
+    const now = Date.now();
+    if (now - lastTap < 320) {
+      const r = $('stage').getBoundingClientRect();
+      const left = e.clientX - r.left < r.width / 2;
+      v.currentTime = Math.max(0, Math.min(v.duration || 1e9, v.currentTime + (left ? -10 : 10)));
+      const fl = $(left ? 'fl' : 'fr'); fl.classList.add('show'); setTimeout(() => fl.classList.remove('show'), 480);
+      lastTap = 0;
+    } else {
+      lastTap = now;
+      setTimeout(() => { if (Date.now() - lastTap >= 300) ov.classList.toggle('hidden'); }, 320);
+    }
+  });
+  // Tasker JS interface
+  window.mediaHub = { play: (url, title) => { list.splice(i + 1, 0, { url: String(url), title: String(title || '') }); load(i + 1); }, next: () => load(i + 1), prev: () => load(i - 1), pause: () => v.pause() };
+  load(0); showOverlay();
+})();
+</script>
+</body>
+</html>

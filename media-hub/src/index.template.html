@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a0f18">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Media Hub">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<!-- The wall: this page may only talk to itself, this device's own server (127.0.0.1) and Google Drive frames/thumbnails that you open.
+     Nothing else can be contacted, so your library cannot be sent or found anywhere, even by mistake. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file: https://drive.google.com https://*.googleusercontent.com; media-src 'self' data: blob: file:; connect-src 'self' data: blob: http://127.0.0.1:* http://localhost:*; frame-src https://drive.google.com https://*.google.com https://*.googleusercontent.com; worker-src 'self'; manifest-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Media Hub · Personal</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+{{CSS}}
+</style>
+</head>
+<body class="priv">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-lib" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+    <symbol id="i-vault" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+    <symbol id="i-ws" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5ZM3 12.5l9 5 9-5M3 17l9 5 9-5"/></symbol>
+    <symbol id="i-tools" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M4 12h4M12 12h8"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/><circle cx="10" cy="12" r="2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4.5" height="16" rx="1.2" stroke="none"/><rect x="13.5" y="4" width="4.5" height="16" rx="1.2" stroke="none"/></symbol>
+    <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-9 9"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-playo" viewBox="0 0 24 24"><path d="M7.5 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L8.7 4.5a.8.8 0 0 0-1.2.7z"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><path d="M7 4l5 5 5-5M7 13l5 5 5-5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.5l-1.8-5L5 9.7l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 13h5l1.5 3h5L16 13h5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.6-10A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+    <symbol id="i-hd" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M7 9v6M7 12h3.5M10.5 9v6M14 9v6h1.5a3 3 0 0 0 0-6z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="m9.5 10 2.5-2.5 2.5 2.5M9.5 14l2.5 2.5 2.5-2.5"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2.5L9 4h6l1.5 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  </defs>
+</svg>
+
+<header class="top" id="top">
+  <div class="brand">
+    <div class="logo" id="logo">M</div>
+    <div class="grow"><h1 id="appTitle">Media Hub</h1><small id="subtitle">Personal · offline-first</small></div>
+    <button class="ibtn" id="btnCmd" aria-label="Quick actions" title="Quick actions (K or Ctrl+K)"><svg><use href="#i-bolt"/></svg></button>
+    <button class="ibtn" id="btnPriv" aria-pressed="true" aria-label="Toggle privacy blur" title="Privacy blur (B)"><svg><use href="#i-eyeoff"/></svg></button>
+    <button class="ibtn" id="btnPanic" aria-label="Hide screen now" title="Hide screen now (X, or press Esc twice)"><svg><use href="#i-lock"/></svg></button>
+  </div>
+  <div class="searchrow" id="searchRow">
+    <label class="search"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg>
+      <span class="sr-only">Search</span>
+      <input id="q" type="search" placeholder="Search or ask…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+      <button class="ibtn sbtn" id="btnSaveSearch" aria-label="Save this search" title="Save this search as a smart folder"><svg><use href="#i-star"/></svg></button>
+      <button class="ibtn sbtn" id="btnMic" aria-label="Voice commands (hold for hands-free)" aria-pressed="false" title="Voice: tap to talk, hold for hands-free (V)"><svg><use href="#i-mic"/></svg></button>
+    </label>
+  </div>
+</header>
+
+<main id="main">
+  <section class="tab" id="tab-library" aria-label="Library">
+    <div class="chips" id="chips" role="group" aria-label="Filters"></div>
+    <div class="toolbar">
+      <div class="count" id="count" aria-live="polite"></div>
+      <div class="seg" role="group" aria-label="Density">
+        <button id="dGrid" aria-pressed="true">Grid</button><button id="dList" aria-pressed="false">List</button><button id="dCompact" aria-pressed="false">Tiny</button>
+      </div>
+      <button class="btn small" id="btnSelect" title="Select several (or Ctrl/Shift + click)"><svg class="bi" viewBox="0 0 24 24"><use href="#i-check"/></svg>Select</button>
+      <select class="sel" id="sort" aria-label="Sort">
+        <option value="catalog">Catalog</option>
+        <option value="recent">Recent</option>
+        <option value="added">Newest added</option>
+        <option value="title">A–Z</option>
+        <option value="code">Code</option>
+        <option value="category">Category</option>
+        <option value="res">Resolution</option>
+        <option value="opens">Most opened</option>
+        <option value="rating">Rating</option>
+      </select>
+    </div>
+    <div id="rails"></div>
+    <div class="grid" id="grid" aria-live="off"></div>
+  </section>
+
+  <section class="tab hidden" id="tab-folders" aria-label="Folders">
+    <div id="fhead" class="fwrap"></div>
+    <div id="ftiles" class="fwrap"></div>
+    <div class="toolbar" id="ftool"><div class="count" id="fcount" aria-live="polite"></div>
+      <button class="btn small" id="fSelect"><svg class="bi" viewBox="0 0 24 24"><use href="#i-check"/></svg>Select</button>
+      <select class="sel" id="fsort" aria-label="Sort"><option value="catalog">Folder order</option><option value="recent">Recent</option><option value="added">Newest added</option><option value="title">A–Z</option><option value="code">Code</option><option value="category">Category</option><option value="res">Resolution</option><option value="opens">Most opened</option><option value="rating">Rating</option></select>
+    </div>
+    <div class="grid" id="fgrid" aria-live="off"></div>
+  </section>
+
+  <section class="tab hidden" id="tab-vault" aria-label="Vault"><div class="panel" id="vaultPanel"></div></section>
+
+  <section class="tab hidden" id="tab-workspace" aria-label="Workspace">
+    <div class="chips" id="wsChips"></div>
+    <div class="panel" id="wsPanel"></div>
+  </section>
+
+  <section class="tab hidden" id="tab-tools" aria-label="Tools">
+    <div class="panel">
+      <div class="pcard" id="cardLocation"><h3>Library location</h3><div id="locCard"></div></div>
+
+      <div class="pcard" id="cardNet">
+        <h3>Privacy &amp; network</h3>
+        <p>Your library is walled off: it is never uploaded, indexed or searchable online, and the page’s own security policy blocks every connection except this device and the Google Drive items you choose to open.</p>
+        <div id="netRows"></div>
+        <label class="switch"><span>Offline-only mode<small>Turns off everything that can go online: Drive thumbnails and player, voice, web-search links</small></span><input type="checkbox" id="optOffline"></label>
+      </div>
+
+      <div class="pcard" id="cardShared">
+        <h3>Shared space</h3>
+        <p>The only place meant for other people, kept apart from your private library. Nothing gets in unless you share it. Everyone gets one folder, named after them. It travels only when you send a share pack or sync a folder you chose.</p>
+        <div class="row"><button class="btn" id="btnProfile">Your name…</button><button class="btn" id="btnOpenShared">Open Shared</button></div>
+        <div class="row"><button class="btn" id="btnPack">Make a share pack</button><button class="btn" id="btnImportPack">Import a share pack…</button><button class="btn" id="btnConnectShared">Connect a shared folder…</button></div>
+        <p id="sharedInfo"></p>
+      </div>
+
+      <div class="pcard" id="cardVoice">
+        <h3>Voice &amp; commands</h3>
+        <p>Tap the mic and say what you want: “show me unseen videos from drive”, “open generated”, “file this in sourced”, “next”. Hold the mic (or say “keep listening”) for hands-free. The same words work typed in the search box or Quick actions.</p>
+        <label class="switch"><span>Speak replies<small>Short spoken confirmations</small></span><input type="checkbox" id="optVoiceReply"></label>
+        <label class="switch"><span>Hands-free needs “hub” first<small>Stops a playing clip’s sound from triggering commands</small></span><input type="checkbox" id="optVoiceWake"></label>
+        <div class="row"><label for="optVoiceLang" style="font-size:.85rem;color:var(--muted)">Language</label><input class="input" id="optVoiceLang" placeholder="automatic, e.g. en-AU" style="max-width:180px" autocapitalize="off" spellcheck="false"></div>
+        <div class="row"><button class="btn primary" id="btnVoiceTry">Try voice</button><button class="btn" id="btnSayHelp">What can I say?</button></div>
+        <p id="voiceInfo"></p>
+      </div>
+
+      <div class="pcard" id="cardSources">
+        <h3>Folders &amp; sources</h3>
+        <p>Link a folder to read it in place (nothing copied), share phone folders through the companion server, or write the whole library out as a real Media Hub Library folder with AI, Sources, Photos, Videos and your own folders inside.</p>
+        <div class="row"><button class="btn" id="btnLinkDir">Link a folder…</button><button class="btn" id="btnServerLib">Load phone folders</button></div>
+        <div class="row"><button class="btn" id="btnMaster">Export to a real folder…</button><button class="btn" id="btnWhere">Where are my files?</button></div>
+        <p id="srcInfo"></p>
+      </div>
+
+      <div class="pcard" id="cardInstall">
+        <h3>Install &amp; offline</h3>
+        <p id="installState">Checking…</p>
+        <div class="row">
+          <button class="btn primary hidden" id="btnInstall">Install app</button>
+          <button class="btn" id="btnPersist">Protect storage</button>
+          <span id="storageInfo" style="color:var(--muted);font-size:.8rem"></span>
+        </div>
+      </div>
+
+      <div class="pcard" id="cardPrivacy">
+        <h3>Privacy</h3>
+        <label class="switch"><span>Blur thumbnails<small>Press and hold a card (or hover on desktop) to peek</small></span><input type="checkbox" id="optBlur"></label>
+        <div class="row"><label for="optBlurAmt" style="font-size:.85rem;color:var(--muted)">Blur strength</label><input type="range" id="optBlurAmt" min="6" max="40" value="18" style="flex:1;accent-color:var(--accent)"></div>
+        <label class="switch"><span>Cover screen when app is hidden<small>Also pauses playback when you switch apps</small></span><input type="checkbox" id="optHideBg"></label>
+        <div class="row"><label for="optLockAfter" style="font-size:.85rem;color:var(--muted)">Ask for PIN after</label>
+          <select class="sel" id="optLockAfter"><option value="0">Immediately</option><option value="30000">30 seconds away</option><option value="300000">5 minutes away</option><option value="-1">Only on launch</option></select></div>
+        <div class="row"><button class="btn" id="btnPin">Set PIN</button><button class="btn danger hidden" id="btnPinClear">Remove PIN</button><button class="btn" id="btnLockNow">Hide screen now</button></div>
+        <p>The PIN and screen cover keep casual eyes out. They do not encrypt the files or the catalog stored in this app.</p>
+      </div>
+
+      <div class="pcard" id="cardNotes">
+        <h3>Encrypted notes</h3>
+        <p>Seal private notes with a passphrase (AES-256, on this device). The passphrase is never stored and cannot be recovered. Notes lock again with panic, the PIN screen, or after 5 minutes away. Encrypted notes stay encrypted in backups and are never searchable.</p>
+        <label class="switch" id="optEncNotesRow"><span>Encrypt new notes<small>Every note you write is sealed</small></span><input type="checkbox" id="optEncNotes"></label>
+        <div class="row"><button class="btn primary" id="btnNotesSetup">Set a passphrase…</button><button class="btn" id="btnNotesUnlock">Unlock</button><button class="btn" id="btnNotesLock">Lock now</button><button class="btn" id="btnNotesAll">Encrypt all notes</button></div>
+        <div class="row"><button class="btn" id="btnNotesChange">Change passphrase…</button><button class="btn" id="btnNotesOff">Remove encryption</button><button class="btn danger" id="btnNotesForgot">Forgot it…</button></div>
+        <p id="notesInfo"></p>
+      </div>
+
+      <div class="pcard" id="cardRestore">
+        <h3>Restore points</h3>
+        <p>Snapshots of your own layer (favourites, ratings, notes, tags, folders and filing, collections, Trash, saved searches, resume points). One is made each day you use the app and before big changes: restoring a backup, deleting for good, importing a catalog, filing 25+ items, removing note encryption. When you encrypt a note, restore points keep only the sealed version. The last 12 are kept on this device. Media is never part of them and never touched.</p>
+        <div class="row"><button class="btn" id="btnRpNow">Make one now</button></div>
+        <div id="rpList"></div>
+      </div>
+
+      <div class="pcard" id="cardAppearance">
+        <h3>Appearance</h3>
+        <div class="row"><div class="seg" id="themeSeg"><button data-theme="dark">Dark</button><button data-theme="oled">OLED</button><button data-theme="light">Light</button></div></div>
+        <div class="row"><div class="swatches" id="swatches"></div></div>
+      </div>
+
+      <div class="pcard" id="cardPlayback">
+        <h3>Playback</h3>
+        <label class="switch"><span>Resume where I left off<small>Saved in this app, never uploaded</small></span><input type="checkbox" id="optResume"></label>
+        <label class="switch"><span>Autoplay next video<small>Moves through the current filter</small></span><input type="checkbox" id="optAutoNext"></label>
+        <label class="switch"><span>Keep screen awake while playing</span><input type="checkbox" id="optWake"></label>
+        <label class="switch"><span>Load Drive thumbnails<small>Contacts Google when on. Off keeps everything local</small></span><input type="checkbox" id="optDriveThumbs"></label>
+        <label class="switch"><span>Play Drive clips here<small>Opens Drive’s own player inside the app straight away (contacts Google). Off: one tap on “Play here” each time</small></span><input type="checkbox" id="optDrivePlayHere"></label>
+      </div>
+
+      <div class="pcard" id="cardLibrary">
+        <h3>Your files</h3>
+        <p>Add photos or videos from this device. Bytes are stored exactly as they are: nothing is converted, resized or recompressed, and the originals stay where they are. Each file gets a SHA-256 so exact copies are spotted.</p>
+        <div class="row"><button class="btn primary" id="btnAdd">Add files…</button><button class="btn" id="btnAddFolder">Add folder…</button><button class="btn" id="btnVerify">Verify originals</button></div>
+        <div class="row"><button class="btn" id="btnAddLink">Save a link…</button><button class="btn" id="btnImportCat">Import catalog (TSV/CSV/JSON)…</button></div>
+        <div class="row"><button class="btn" id="btnDupes">Find duplicates</button><button class="btn" id="btnExportView">Export view (CSV)</button></div>
+        <div class="log hidden" id="verifyLog"></div>
+      </div>
+
+      <div class="pcard" id="cardInsights"><h3>Insights</h3><div id="insights"></div></div>
+
+      <div class="pcard" id="cardBackup">
+        <h3>Backup</h3>
+        <p>Favourites, ratings, notes, tags, progress and settings in one small JSON file. Media files are not included; re-add them and they re-link by hash.</p>
+        <div class="row"><button class="btn" id="btnBackup">Export backup</button><button class="btn" id="btnRestore">Restore…</button></div>
+      </div>
+
+      <div class="pcard" id="cardLive">
+        <h3>Live server (optional)</h3>
+        <p>Talks to your phone-local Termux server. Only loopback addresses are accepted, so a token can never be sent anywhere else. Works fully offline when the server is not running.</p>
+        <div class="row"><input class="input" id="liveBase" value="http://127.0.0.1:8080" aria-label="Server address" inputmode="url" autocapitalize="off" spellcheck="false"></div>
+        <div class="row"><input class="input" id="liveToken" type="password" placeholder="Bearer token (memory only unless you opt in)" autocomplete="off" aria-label="Bearer token"></div>
+        <label class="switch"><span>Remember token on this device<small>Off by default</small></span><input type="checkbox" id="optRememberToken"></label>
+        <div class="row"><button class="btn small" data-live="/v1/health">Health</button><button class="btn small" data-live="/v1/catalog">Load catalog</button><button class="btn small" data-live="/v1/media/list">media/list</button><button class="btn small" data-live="/v1/media/metadata">media/metadata</button><button class="btn small" data-live="/v1/media/thumbnail">media/thumbnail</button></div>
+        <div class="log" id="liveLog">Not connected.</div>
+      </div>
+
+      <div class="pcard hidden" id="cardKit">
+        <h3>Companion kit</h3>
+        <p>The loopback server, the playable-copy tool, the Tasker player, the Termux one-tap start, the rebuild scripts and the app source travel inside this file. Download them as a zip when you need them; nothing is fetched from the internet.</p>
+        <div class="row"><button class="btn" id="btnKit">Download companion kit (.zip)</button><span id="kitInfo" style="color:var(--muted);font-size:.8rem"></span></div>
+      </div>
+
+      <div class="pcard" id="cardDiag">
+        <h3>Self-test</h3>
+        <p>Checks the catalog, stored files, crypto, storage and offline cache so problems show up here instead of failing silently.</p>
+        <div class="row"><button class="btn" id="btnSelfTest">Run self-test</button><button class="btn" id="btnCopyDiag" title="Counts and settings only: no titles, notes, names or links">Copy diagnostics</button><button class="btn" id="btnHelp">Shortcuts</button></div>
+        <div class="log hidden" id="diagLog"></div>
+      </div>
+
+      <div class="pcard" id="cardAbout"><h3>About</h3><dl class="kv" id="aboutKv"></dl></div>
+    </div>
+  </section>
+</main>
+
+<div class="fab" id="fab">
+  <button id="btnShuffle" aria-label="Surprise me" title="Open something unseen (S)"><svg><use href="#i-shuffle"/></svg></button>
+  <button class="main" id="btnFabAdd" aria-label="Add files" title="Add files"><svg><use href="#i-plus"/></svg></button>
+</div>
+
+<div class="selbar" id="selbar" role="toolbar" aria-label="Selection"></div>
+
+<nav class="nav" id="nav" aria-label="Sections">
+  <button data-tab="library" aria-current="page"><svg><use href="#i-lib"/></svg>Home</button>
+  <button data-tab="folders"><svg><use href="#i-vault"/></svg>Folders</button>
+  <button id="navScroll" aria-label="Scroll"><svg><use href="#i-scroll"/></svg>Scroll</button>
+  <button data-tab="tools"><svg><use href="#i-tools"/></svg>Tools</button>
+</nav>
+
+<div class="feed" id="feed" role="dialog" aria-modal="true" aria-label="Scroll">
+  <div class="fbar2"><button class="ibtn" id="feedClose" aria-label="Close"><svg><use href="#i-close"/></svg></button>
+    <div class="vt"><b id="feedTitle">Scroll</b><span id="feedPos"></span></div>
+    <button class="ibtn" id="feedAuto" aria-pressed="true" aria-label="Auto-scroll" title="Auto-scroll: move on when a clip ends"><svg><use href="#i-auto"/></svg></button>
+    <button class="ibtn" id="feedSound" aria-pressed="false" aria-label="Sound off"><svg><use href="#i-mute"/></svg></button></div>
+  <div id="fscroll"></div>
+</div>
+
+<div class="vpill" id="vpill" role="status" aria-live="polite"><span class="vdot"></span><span class="vmode" id="vpillMode">Voice</span><span class="vtext" id="vpillText"></span><button id="vpillHelp" aria-label="What can I say?">?</button><button id="vpillStop" class="hidden" aria-label="Stop listening">Stop</button></div>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Viewer">
+  <div class="vbar" id="vbar">
+    <button class="ibtn" id="vClose" aria-label="Close"><svg><use href="#i-close"/></svg></button>
+    <div class="vt"><b id="vTitle"></b><span id="vSub"></span></div>
+    <button class="ibtn" id="vFolder" aria-label="Move to a folder" title="Move to a folder (G)"><svg><use href="#i-vault"/></svg></button>
+    <button class="ibtn" id="vFav" aria-label="Favourite" aria-pressed="false" style="font-size:19px">☆</button>
+    <button class="ibtn" id="vInfo" aria-label="Details"><svg><use href="#i-info"/></svg></button>
+  </div>
+  <div class="vstage" id="vstage"></div>
+  <div class="pill" id="sleepPill"></div>
+  <button class="vnav l" id="vPrev" aria-label="Previous">‹</button>
+  <button class="vnav r" id="vNext" aria-label="Next">›</button>
+  <div class="vtools" id="vtools"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details"><div class="grab"></div><div id="sheetBody"></div></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span></div>
+<div class="dropzone-hint" id="dropHint">Drop photos, videos or audio to add them<br><small style="font-weight:500;color:var(--muted)">Stored byte-for-byte, nothing converted</small></div>
+<input type="file" id="filePick" accept="video/*,image/*,audio/*,.heic,.heif,.mkv,.avi,.ts,.flac,.opus,.amr" multiple hidden>
+<input type="file" id="camPick" accept="image/*,video/*" capture="environment" hidden>
+<input type="file" id="folderPick" webkitdirectory directory multiple hidden>
+<input type="file" id="restorePick" accept="application/json,.json" hidden>
+<input type="file" id="packPick" accept=".zip,application/zip" hidden>
+<input type="file" id="catalogPick" accept=".tsv,.csv,.json,.txt,text/tab-separated-values,text/csv,application/json,text/plain" hidden>
+
+<div class="cover" id="cover" aria-hidden="true"></div>
+<div class="lock" id="lock" role="dialog" aria-modal="true" aria-label="Locked">
+  <div class="logo">M</div>
+  <div><b id="lockMsg" style="font-size:1.05rem">Enter PIN</b><div id="lockSub" style="color:var(--muted);font-size:.84rem;margin-top:4px;min-height:1.2em"></div></div>
+  <div class="dots" id="pinDots"></div>
+  <div class="keys" id="keys"></div>
+  <button class="btn hidden" id="lockCancel">Cancel</button>
+</div>
+
+<script type="application/json" id="catalog">{{CATALOG}}</script>
+{{EMBED_BLOCKS}}<script type="application/json" id="embedded">{{EMBED}}</script>
+<script type="application/json" id="kit">{{KIT}}</script>
+<script>
+{{JS}}
+</script>
+</body>
+</html>

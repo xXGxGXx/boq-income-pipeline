@@ -1,0 +1,31 @@
+{
+  "tasks": [
+    {
+      "id": "fix-auth-tests",
+      "prompt": "Investigate failing authentication tests, find the root cause, and propose a fix with regression coverage.",
+      "task_type": "coding",
+      "provider": "claude",
+      "timeout": 900,
+      "priority": 1,
+      "context": {"repository": ".", "target_files": ["tests/test_auth.py", "app/auth.py"]}
+    },
+    {
+      "id": "brisbane-tech-sentiment",
+      "prompt": "Summarize the latest public discussion about Brisbane's technology sector across news and social platforms.",
+      "task_type": "realtime",
+      "provider": "grok",
+      "timeout": 120,
+      "priority": 3,
+      "context": {"region": "Brisbane, Queensland, Australia", "max_tokens": 1800}
+    },
+    {
+      "id": "launch-campaign",
+      "prompt": "Create a launch campaign concept for a productivity app, including visual direction, tagline options, and a 30-second video storyboard.",
+      "task_type": "creative",
+      "provider": "muse",
+      "timeout": 180,
+      "priority": 5,
+      "context": {"media": "text", "mode": "campaign"}
+    }
+  ]
+}

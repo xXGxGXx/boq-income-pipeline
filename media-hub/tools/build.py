@@ -76,9 +76,9 @@ def main():
     open(os.path.join(app, "sw.js"), "w").write(sw)
 
     # ---- tools + readme ----
-    for t in ("media_serve.py", "mirror_extract.py", "verify_mirror.py", "build_catalog.py", "make_icons.py", "build.py", "optimize_media.py", "make_master_folder.py", "make_demo.py"): shutil.copyfile(os.path.join(HERE, t), os.path.join(app, "tools", t))
+    for t in ("media_serve.py", "mirror_extract.py", "verify_mirror.py", "build_catalog.py", "make_icons.py", "build.py", "optimize_media.py", "make_master_folder.py", "make_demo.py", "verify_checksums.py"): shutil.copyfile(os.path.join(HERE, t), os.path.join(app, "tools", t))
     shutil.copytree(SRC, os.path.join(app, "src")); os.makedirs(os.path.join(app, "tests"))
-    for t in ("test_range.py", "test_optimize.py", "test_library.py", "e2e_smoke.js", "checklist.py"): shutil.copyfile(os.path.join(ROOT, "tests", t), os.path.join(app, "tests", t))
+    for t in ("test_range.py", "test_optimize.py", "test_library.py", "e2e_smoke.js", "checklist.py", "test_checksums.py", "test_media_serve.py", "run_all.sh"): shutil.copyfile(os.path.join(ROOT, "tests", t), os.path.join(app, "tests", t))
     for sub in ("tasker", "termux"):
         if os.path.isdir(os.path.join(ROOT, "extras", sub)): shutil.copytree(os.path.join(ROOT, "extras", sub), os.path.join(app, sub))
     for f in os.listdir(os.path.join(app, "termux")) if os.path.isdir(os.path.join(app, "termux")) else []: os.chmod(os.path.join(app, "termux", f), 0o755)
@@ -92,8 +92,8 @@ def main():
             eid = "emb-%d" % n; emb[m["dest"]] = {"mime": m["mime"], "id": eid}
             blocks.append('<script type="application/octet-stream" id="%s">%s</script>\n' % (eid, base64.b64encode(open(os.path.join(app, m["dest"]), "rb").read()).decode()))
         kit = {}
-        for rel in ["README.md"] + ["tools/" + t for t in ("media_serve.py", "optimize_media.py", "mirror_extract.py", "verify_mirror.py", "build_catalog.py", "build.py", "make_icons.py", "make_master_folder.py", "make_demo.py")] + \
-                ["tests/test_range.py", "tests/test_optimize.py", "tests/test_library.py", "tests/e2e_smoke.js", "tests/checklist.py"] + ["src/" + f for f in sorted(os.listdir(SRC))]:
+        for rel in ["README.md"] + ["tools/" + t for t in ("media_serve.py", "optimize_media.py", "mirror_extract.py", "verify_mirror.py", "build_catalog.py", "build.py", "make_icons.py", "make_master_folder.py", "make_demo.py", "verify_checksums.py")] + \
+                ["tests/test_range.py", "tests/test_optimize.py", "tests/test_library.py", "tests/e2e_smoke.js", "tests/checklist.py", "tests/test_checksums.py", "tests/test_media_serve.py", "tests/run_all.sh"] + ["src/" + f for f in sorted(os.listdir(SRC))]:
             fp = os.path.join(ROOT, rel)
             if os.path.isfile(fp): kit[rel] = rd(fp)
         for sub in ("tasker", "termux"):

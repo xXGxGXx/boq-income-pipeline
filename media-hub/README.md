@@ -26,6 +26,8 @@ This folder holds the **app only**. Your media, catalog and builds stay on your 
 - Accessibility: the viewer, details sheet and Scroll feed now take keyboard and screen-reader focus, keep Tab inside, and give focus back to where you were. Space still plays and pauses.
 - Server: only the app's own page files and photos, videos and audio are served; a stray `.env`, `.zip`, `.txt` or key file in the app folder is refused.
 - Tests: `tests/checklist.py` (40-line checklist with a Markdown report) and `tests/test_media_serve.py` (21 server cases) join the unit tests and the browser test.
+- `tools/verify_checksums.py`: check a folder against a checksum list (sha256sum, BSD or JSON), and check or rebuild a split archive (`name.zip.part000…`) against the original's SHA-256 without writing anything unless asked.
+- `bash tests/run_all.sh` runs every suite in one go. Ideas gathered for later: [IDEAS.md](IDEAS.md).
 
 **2.2**
 - Source tree recovered from the 2.1 build (the 2.0 zip's `src/` was out of date), so 2.1 can be rebuilt and changed again.
@@ -85,6 +87,12 @@ python3 tools/optimize_media.py media --out media/playable --thumbs
 ```
 Skips files that already play everywhere, remuxes losslessly where it can, re-encodes only what must be (never upscales), re-hashes sources before and after. Rebuild with `build_catalog.py --playable media/playable` and the app plays the copy when a browser can't play the original.
 
+## Check originals against a checksum list
+```
+python3 tools/verify_checksums.py SHA256SUMS --root ~/storage/dcim --extra           # or a JSON manifest, or media-manifest.json
+python3 tools/verify_checksums.py --join "vault.zip.part*" --expect <sha256>           # do the parts rebuild the original? writes nothing
+```
+
 ## Rebuild your own library
 ```
 python3 tools/mirror_extract.py "My Library.html" private/mirror/        # a downloadable library page -> plain files + manifest.json
@@ -96,7 +104,8 @@ Every media file is re-hashed after copying; the build stops if one byte differs
 
 ## Tests
 ```
-python3 -m unittest tests/test_range.py tests/test_optimize.py tests/test_library.py   # server, Range, path safety, optimizer, phone folders
+bash tests/run_all.sh                                                                 # everything below, after building the demo
+python3 -m unittest tests/test_range.py tests/test_optimize.py tests/test_library.py tests/test_checksums.py
 python3 -m pytest tests/test_media_serve.py                                           # 21 server cases (pip install pytest)
 node tests/e2e_smoke.js dist [--shots DIR]                                            # browser test; needs Node Playwright + Chromium
 python3 tests/checklist.py --report checklist-report.md                               # 40-line checklist; needs Python Playwright

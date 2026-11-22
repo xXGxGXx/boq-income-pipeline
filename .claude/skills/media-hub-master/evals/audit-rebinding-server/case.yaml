@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: audit-rebinding-server
+expected_outcome: |
+  The run starts the server against a throwaway library and probes it. It reports that any Host header is accepted, so a web page using DNS rebinding could list, read and upload library files, and that 416 replies lack Content-Range. It suggests concrete fixes and leaves media_hub_server.py unchanged.
+context:
+  scaffold_script: place-files.sh

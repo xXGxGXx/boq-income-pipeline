@@ -1,5 +1,5 @@
 # Device Orchestration Stack — Design Doc
-**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay)
+**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input)
 
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
@@ -19,6 +19,7 @@ A voice-first, minimal-fail-point orchestration layer combining the best non-con
 
 ### Layer 4 — Screen Vision & Input
 - DeVA accessibility-service pattern. droid-agent (numbered UI refs, external adb). Shizuku screenshot path (no MediaProjection prompt).
+- **Grid overlay (Module G)**: coarse grid with coded cells as coordinate fallback when UI tree misses custom-drawn content.
 
 ### Layer 5 — Voice: Vox Commander triple-layer routing
 - Regex first, local LLM second, offline fallback third. Swappable plugin interface.
@@ -135,6 +136,51 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 - Not full phone automation — scoped to text injection and send on approved chat surfaces
 - Does not bypass platform-level content policies; it only automates the user's own keystrokes
 
+### Module G — Screen Grid Input Overlay (2026-11-23 addition)
+Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix), scrcpy-agent, Robot Actions, ghost-in-the-droid, AdbPhoneAgent, and the DEV Community analysis of why agent taps miss. Provides a coarse grid-coded screen surface so the model can target anything — including custom-drawn content the accessibility tree cannot see — without guessing raw pixels.
+
+**Core design (from LightGUIAgent's proven pattern):**
+- Screen divided into a **10×20 grid**: columns A–J (left to right), rows 1–20 (top to bottom) — chess-notation style
+- Model outputs a cell code like "E5" instead of pixel coordinates — far fewer tokens, no scaling math, resolution-agnostic
+- Cell size auto-calculated from device resolution (~108×120 px on a 1080×1920 screen); no hardcoded dimensions
+- Grid overlay rendered onto the screenshot (grid_overlay.py pattern) so the model sees labelled cells visually
+- grid_converter.py translates cell ↔ pixel bidirectionally for execution via `adb shell input tap` or amctl
+
+**Targeting priority ladder (UI-tree-first, grid-second, raw-last):**
+1. **UI tree refs** (droid-agent numbered refs, amctl tapref @pN) — precise, cheap, stable; always tried first
+2. **Grid cell** (Module G) — for custom-drawn surfaces: games, WebViews, Flutter canvases, image-only widgets where the tree exposes nothing tappable
+3. **Raw coordinates** — last resort; requires the DEV Community "coordinate contract": screenshot resized to exact model-visible size with labelled grid drawn, coordinates converted back to device pixels, taps outside that space rejected and model retries
+4. **OCR layer** (amctl ocr, ghost-in-the-droid find_on_screen) — finds text the tree cannot see; returns bounds for tap
+5. **HID-level input** (scrcpy UHID virtual touchscreen/keyboard) — when synthetic taps get silently ignored by the target app
+
+**Precision refinements (from asterdroid's shot-grid pattern):**
+- `shot grid <cell>` crops and enlarges a single cell with screen-pixel labels for fine targeting
+- `shot grid <range>` (e.g., R3-S4) zooms a multi-cell region — useful when a target straddles a boundary
+- Zoomed cells re-label at pixel granularity so the model can refine from "E5" to an exact point
+
+**Verification (from amctl's tap --verify pattern):**
+- Every grid tap (and ref tap) optionally runs with `--verify`: screen signature compared before and after; if unchanged, the tap is flagged as missed and retried or escalated
+- Prevents silent no-ops from animations, overlays, or collapsed toolbars
+
+**Keypress replication (user's letter/space/back requirement):**
+- droid-agent `key` command by name: back, home, enter, tab, del, power
+- amctl exposes the same via `amctl back`, `amctl home`, `amctl key <name>`
+- Text entry: `droid-agent type "text"` (spaces handled) or amctl `type` / `paste`
+- Combined: the model can emit "type H-E-L-L-O, key space, type W-O-R-L-D, key enter" as a single sequenced action
+
+**Integration with existing layers:**
+- Uses Layer 4 (DeVA/droid-agent/Shizuku) for screenshot capture and tree dumps
+- Uses Layer 2 (termux-mcp) to invoke amctl/droid-agent grid and key commands
+- Uses Module B (capability registry) to check screenshot and adb availability before attempting
+- Uses Module A (replay buffer) to log every grid-tap and keypress sequence for macro reuse
+- Uses Module F's safety model: spoken confirm before destructive grid taps, Stop affordance halts sequences
+- Grid overlay is ephemeral — drawn on the screenshot sent to the model, never persisted on the device screen
+
+**Non-goals:**
+- Not a replacement for UI-tree refs — grid is strictly the fallback for tree-blind surfaces
+- Not pixel-perfect targeting by default — coarse cells first, zoom-refine on demand
+- Not a general gesture engine — taps, long-presses, and basic swipes only at this stage
+
 ## Locked Refinements
 1. Shizuku screenshot path over AutoX
 2. Swappable voice router plugins
@@ -149,6 +195,7 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 11. Cross-device sync spine via Drive + GitHub
 12. Code interpreter with static pre-pass, sandboxed execution, traceback feedback, three-failure cap, objective/check/stop framework
 13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging, global allowlist synced via Drive spine
+14. Screen grid input overlay — 10×20 chess-notation grid, auto cell-size from resolution, UI-tree-first targeting ladder with grid/OCR/HID fallbacks, zoom-crop precision, tap verification, keypress replication (letters/space/back/enter), ephemeral overlay
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -173,6 +220,14 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 - IME key event for send is more reliable than coordinate taps on dynamic send buttons
 - AccessDroid/amctl adds no new permission surface beyond the accessibility grant already needed for Layer 4
 - Global allowlist avoids per-device duplication — single source of truth in Drive spine
+- Grid cell codes are shorter than pixel pairs — fewer tokens per targeting action
+- Auto cell-size from resolution means zero per-device configuration
+- Grid is ephemeral overlay — no persistent on-screen artifact for the user to see or dismiss
+- Targeting ladder prevents wasting grid attempts on tree-visible elements
+- Tap verification catches silent misses before the agent proceeds on stale assumptions
+- Zoom-crop turns a coarse 200-cell grid into effectively arbitrary precision on demand
+- OCR and HID fallbacks cover the two hardest surfaces: canvas text and input-blocking apps
+- Keypress-by-name (droid-agent/amctl) replicates physical keyboard input without coordinate guessing
 
 ## Open Questions
 - ARGUS deeper inspection needed
@@ -192,3 +247,7 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 - Whether termux-api accessibility merge (issue #828) will obsolete AccessDroid
 - Optimal timing between SET_TEXT and IME submit to avoid dropped key events
 - Whether to support multi-field forms (tab between fields) or single-field only
+- Grid: optimal default resolution (10×20 vs finer) for typical phone screens
+- Whether grid overlay should also render on the user's visible screen (debug mode) or model-only
+- Grid vs OCR precedence when both could resolve the same target
+- Whether scrcpy UHID path should be default or strictly opt-in for HID-level taps

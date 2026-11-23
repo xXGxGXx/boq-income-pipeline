@@ -1,1 +1,18 @@
-PLACEHOLDER
+[
+  {
+    "task_id": "t1",
+    "prompt": "List the top-level files in this repository and summarize what the project does.",
+    "task_type": "coding",
+    "repo_path": "."
+  },
+  {
+    "task_id": "t2",
+    "prompt": "What are the latest trending topics on X right now? Summarize the top five with sources.",
+    "task_type": "web"
+  },
+  {
+    "task_id": "t3",
+    "prompt": "Design a bold poster concept for a summer music festival. Describe layout, colors, typography.",
+    "task_type": "creative"
+  }
+]

@@ -9,7 +9,7 @@ Routes:
 
 Features:
 - Concurrent execution with ThreadPoolExecutor
-- Automatic task classification and routing
+- Automatic task classification and routing (whole-word matching)
 - Retry with exponential backoff
 - Token-bucket rate limiting
 - Structured JSON + Markdown execution reports
@@ -50,7 +50,7 @@ GROK_API_URL = os.getenv("GROK_API_URL", "https://api.x.ai/v1/chat/completions")
 GROK_MODEL = os.getenv("GROK_MODEL", "grok-4")
 GROK_API_KEY = os.getenv("GROK_API_KEY", "")
 
-MUSE_API_URL = os.getenv("MUSE_API_URL", "https://api.muse.ai/v1/generate")
+MUSE_API_URL = os.getenv("MUSE_API_URL", "")          # no guessed default
 MUSE_API_KEY = os.getenv("MUSE_API_KEY", "")
 MUSE_MODEL = os.getenv("MUSE_MODEL", "muse-default")
 
@@ -135,6 +135,13 @@ EXPLICIT_ROUTE_MAP = {
 }
 
 
+def _word_patterns(terms):
+    return [re.compile(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])") for t in terms]
+
+
+_CODING_RX, _WEB_RX, _CREATIVE_RX = _word_patterns(CODING_KEYWORDS), _word_patterns(WEB_SOCIAL_KEYWORDS), _word_patterns(CREATIVE_KEYWORDS)
+
+
 def classify_task(task: Task) -> str:
     """
     Determine the best provider for a task.
@@ -143,7 +150,7 @@ def classify_task(task: Task) -> str:
     1. Explicit task_type
     2. Explicit metadata.route
     3. Repository path presence
-    4. Keyword scoring
+    4. Keyword scoring (whole words only)
     5. Fallback to Claude Code
     """
     explicit = (task.task_type or "").strip().lower()
@@ -159,9 +166,9 @@ def classify_task(task: Task) -> str:
 
     text = task.prompt.lower()
 
-    coding_score = sum(1 for term in CODING_KEYWORDS if term in text)
-    web_score = sum(1 for term in WEB_SOCIAL_KEYWORDS if term in text)
-    creative_score = sum(1 for term in CREATIVE_KEYWORDS if term in text)
+    coding_score = sum(1 for rx in _CODING_RX if rx.search(text))
+    web_score = sum(1 for rx in _WEB_RX if rx.search(text))
+    creative_score = sum(1 for rx in _CREATIVE_RX if rx.search(text))
 
     if creative_score and creative_score >= max(coding_score, web_score):
         return "muse"
@@ -317,6 +324,8 @@ def call_muse(task: Task) -> str:
     """
     Execute a creative or multimedia task through the Muse API.
     """
+    if not MUSE_API_URL:
+        raise ProviderError("MUSE_API_URL is not set (point it at your Muse deployment).")
     if not MUSE_API_KEY:
         raise ProviderError("MUSE_API_KEY is not set.")
 
@@ -347,7 +356,6 @@ def call_muse(task: Task) -> str:
 
     data = response.json()
 
-    # Supports common response shapes: direct text, generated asset URL, or generic result.
     output = (
         data.get("text")
         or data.get("content")
@@ -609,84 +617,130 @@ def write_reports(
 ) -> Dict[str, str]:
     metrics = build_metrics(results, total_wall_time)
     json_report = build_json_report(results, metrics)
-    md_report = build_markdown_report(results, metrics, tasks)
+    markdown_report = build_markdown_report(results, metrics, tasks)
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    json_path = REPORT_DIR / f"report_{stamp}.json"
-    md_path = REPORT_DIR / f"report_{stamp}.md"
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    base = REPORT_DIR / f"orchestration-report-{stamp}"
 
-    json_path.write_text(json.dumps(json_report, indent=2), encoding="utf-8")
-    md_path.write_text(md_report, encoding="utf-8")
+    json_path = base.with_suffix(".json")
+    markdown_path = base.with_suffix(".md")
 
-    return {"json": str(json_path), "markdown": str(md_path)}
+    json_path.write_text(json.dumps(json_report, indent=2, ensure_ascii=False), encoding="utf-8")
+    markdown_path.write_text(markdown_report, encoding="utf-8")
+
+    return {"json": str(json_path), "markdown": str(markdown_path), "metrics": metrics}
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Multi-model task orchestrator")
-    parser.add_argument("--tasks", type=str, help="Path to a JSON file containing a list of tasks")
-    parser.add_argument("--prompt", type=str, help="Single prompt to run")
-    parser.add_argument("--type", type=str, default=None, help="Explicit route: claude_code, grok_plus, muse")
-    parser.add_argument("--repo", type=str, default=None, help="Repository path for coding tasks")
-    parser.add_argument("--workers", type=int, default=DEFAULT_MAX_WORKERS)
-    parser.add_argument("--dry-run", action="store_true", help="Classify and print routes without executing")
-    return parser.parse_args()
+def parse_tasks(path: Path) -> List[Task]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
 
+    if isinstance(raw, dict):
+        raw_tasks = raw.get("tasks", [])
+    elif isinstance(raw, list):
+        raw_tasks = raw
+    else:
+        raise ValueError("Task file must be a JSON array or an object containing a 'tasks' array.")
 
-def load_tasks_from_file(path: str) -> List[Task]:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
     tasks: List[Task] = []
-    for item in data:
+
+    for index, item in enumerate(raw_tasks, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"Task {index} must be an object.")
+
         tasks.append(
             Task(
-                task_id=item.get("task_id") or str(uuid.uuid4())[:8],
-                prompt=item["prompt"],
+                task_id=str(item.get("task_id", f"task-{index:03d}")),
+                prompt=str(item.get("prompt", "")),
                 task_type=item.get("task_type"),
                 repo_path=item.get("repo_path"),
-                attachments=item.get("attachments", []),
-                metadata=item.get("metadata", {}),
+                attachments=list(item.get("attachments", [])),
+                metadata=dict(item.get("metadata", {})),
             )
         )
+
     return tasks
 
 
 def main() -> int:
-    args = parse_args()
-    tasks: List[Task] = []
+    parser = argparse.ArgumentParser(
+        description="Route and execute tasks across Claude Code, Grok Plus, and Muse."
+    )
 
-    if args.tasks:
-        tasks = load_tasks_from_file(args.tasks)
-    elif args.prompt:
+    parser.add_argument(
+        "tasks_file",
+        nargs="?",
+        help="JSON file containing tasks. Use '-' to read JSON tasks from stdin.",
+    )
+
+    parser.add_argument(
+        "--prompt",
+        help="Run one ad-hoc task from a command-line prompt.",
+    )
+
+    parser.add_argument(
+        "--route",
+        choices=["auto", "claude_code", "grok_plus", "muse"],
+        default="auto",
+        help="Force a route for the ad-hoc task.",
+    )
+
+    parser.add_argument(
+        "--repo",
+        help="Repository path for a Claude Code task.",
+    )
+
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=DEFAULT_MAX_WORKERS,
+        help=f"Maximum parallel workers. Default: {DEFAULT_MAX_WORKERS}.",
+    )
+
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=DEFAULT_MAX_RETRIES,
+        help=f"Maximum attempts per task. Default: {DEFAULT_MAX_RETRIES}.",
+    )
+
+    args = parser.parse_args()
+
+    if args.prompt:
         tasks = [
             Task(
-                task_id=str(uuid.uuid4())[:8],
+                task_id=f"adhoc-{uuid.uuid4().hex[:8]}",
                 prompt=args.prompt,
-                task_type=args.type,
+                task_type=args.route if args.route != "auto" else None,
                 repo_path=args.repo,
+                metadata={"max_retries": args.max_retries},
             )
         ]
+    elif args.tasks_file == "-":
+        tasks = parse_tasks(Path(sys.stdin.read()))
+    elif args.tasks_file:
+        tasks = parse_tasks(Path(args.tasks_file))
     else:
-        print("Provide --tasks or --prompt", file=sys.stderr)
-        return 2
+        parser.error("Provide either --prompt or a tasks JSON file.")
 
-    if args.dry_run:
-        for task in tasks:
-            print(f"{task.task_id}: {classify_task(task)} :: {task.prompt[:80]}")
-        return 0
+    if not tasks:
+        parser.error("No tasks were provided.")
 
-    started = time.monotonic()
-    results = run_parallel(tasks, max_workers=args.workers)
-    wall = time.monotonic() - started
+    wall_start = time.monotonic()
+    results = run_parallel(tasks, max_workers=max(1, args.max_workers))
+    wall_time = time.monotonic() - wall_start
 
-    paths = write_reports(results, tasks, wall)
-    metrics = build_metrics(results, wall)
+    report_paths = write_reports(results, tasks, wall_time)
 
-    print(json.dumps({"metrics": metrics, "reports": paths}, indent=2))
-    return 0 if metrics["failed_tasks"] == 0 else 1
+    print(json.dumps(report_paths["metrics"], indent=2))
+    print(f"\nMarkdown report: {report_paths['markdown']}")
+    print(f"JSON report: {report_paths['json']}")
+
+    return 0 if report_paths["metrics"]["failed_tasks"] == 0 else 1
 
 
 if __name__ == "__main__":

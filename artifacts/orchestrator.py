@@ -50,7 +50,7 @@ GROK_API_URL = os.getenv("GROK_API_URL", "https://api.x.ai/v1/chat/completions")
 GROK_MODEL = os.getenv("GROK_MODEL", "grok-4")
 GROK_API_KEY = os.getenv("GROK_API_KEY", "")
 
-MUSE_API_URL = os.getenv("MUSE_API_URL", "https://api.muse.ai/v1/generate")
+MUSE_API_URL = os.getenv("MUSE_API_URL", "")          # no guessed default: prompts and the key only go where you point them
 MUSE_API_KEY = os.getenv("MUSE_API_KEY", "")
 MUSE_MODEL = os.getenv("MUSE_MODEL", "muse-default")
 
@@ -135,6 +135,13 @@ EXPLICIT_ROUTE_MAP = {
 }
 
 
+def _word_patterns(terms):
+    return [re.compile(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])") for t in terms]
+
+
+_CODING_RX, _WEB_RX, _CREATIVE_RX = _word_patterns(CODING_KEYWORDS), _word_patterns(WEB_SOCIAL_KEYWORDS), _word_patterns(CREATIVE_KEYWORDS)
+
+
 def classify_task(task: Task) -> str:
     """
     Determine the best provider for a task.
@@ -159,9 +166,10 @@ def classify_task(task: Task) -> str:
 
     text = task.prompt.lower()
 
-    coding_score = sum(1 for term in CODING_KEYWORDS if term in text)
-    web_score = sum(1 for term in WEB_SOCIAL_KEYWORDS if term in text)
-    creative_score = sum(1 for term in CREATIVE_KEYWORDS if term in text)
+    # whole words only: "x" must not match "next", "edit" must not match "credit", "ci" must not match "decision"
+    coding_score = sum(1 for rx in _CODING_RX if rx.search(text))
+    web_score = sum(1 for rx in _WEB_RX if rx.search(text))
+    creative_score = sum(1 for rx in _CREATIVE_RX if rx.search(text))
 
     if creative_score and creative_score >= max(coding_score, web_score):
         return "muse"
@@ -317,6 +325,8 @@ def call_muse(task: Task) -> str:
     """
     Execute a creative or multimedia task through the Muse API.
     """
+    if not MUSE_API_URL:
+        raise ProviderError("MUSE_API_URL is not set (point it at your Muse deployment).")
     if not MUSE_API_KEY:
         raise ProviderError("MUSE_API_KEY is not set.")
 

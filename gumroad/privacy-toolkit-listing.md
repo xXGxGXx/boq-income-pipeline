@@ -1,56 +1,48 @@
 # Gumroad Listing: Privacy and Integrity Toolkit
 
-**Price:** $19 AUD (one-time)
+**Price:** A$19 (one-time)
+**Catalogue place:** Standalone SKU between the A$5 Micro-Pack and the A$49 Governance Bundle
 **Category:** Software Development > Developer Tools
-**Tags:** Python, privacy, security audit, checksums, CI/CD, stdlib, no-install
+**Tags:** Python, privacy, checksums, local server audit, stdlib, AI builders, no-install
 
 ---
 
 ## Title
-Privacy and Integrity Toolkit — Four stdlib Python Scripts for AI Builders
+Privacy and Integrity Toolkit — Stdlib Python Scripts for AI Builders
 
 ## Subtitle
-Scan for leaked secrets. Audit servers. Verify checksums. Split builds. Zero dependencies.
+Four no-install, stdlib-only Python scripts. Scan for secrets, audit a local server, verify checksums, and split a built page back into source.
 
 ## Description
 
-### The problem
+### Who it's for
 
-AI-assisted projects move fast, and fast means secrets end up in commits, builds ship without integrity checks, and you find out when something breaks in production. Most privacy and audit tools want a subscription, a cloud account, or a dozen pip installs. This toolkit is four scripts, pure Python standard library, that run anywhere Python runs.
+AI builders and solo operators who ship scripts, local tools, or single-file web apps — and need a pre-publish check that does not require a package install.
 
 ### What's inside
 
-**privacy_scan.py** — Recursively scans a directory tree for API keys, tokens, passwords, private keys, and other secret patterns. Flags staged and unstaged git changes too. Reports file, line, and pattern type.
+Four Python 3 scripts plus a test file. Standard library only. No pip. Run with `python3`.
 
-**audit_server.py** — Lightweight HTTP server audit: checks response headers for security misconfigurations (missing HSTS, CSP, X-Frame-Options), exposed admin paths, and basic TLS posture. Point it at any URL.
+**privacy_scan.py** — Find private material before you commit, push, or publish. Scans paths, or git `--staged` / `--tracked` / `--history`, for secrets and tokens, email addresses, Google Drive and other cloud links, device paths, personal media, and catalog files. Matches are masked. Exit 0 if clean.
 
-**verify_checksums.py** — Generate or verify SHA-256 checksums for a file set. Useful for release artifacts, backup integrity, and confirming a download wasn't tampered with.
+**audit_server.py** — Read-only audit of a local media server you run yourself (GET and HEAD only). Checks foreign Host (DNS rebinding), cross-site Origin, security headers, path traversal and dotfiles, directory listings, HTTP Range handling, and whether a loopback port is also bound on all interfaces. Point it only at servers you operate.
 
-**split_build.py** — Splits a large build artifact or directory into sized chunks with checksums for each part. Handy for transferring or uploading large files through size-limited channels.
+**verify_checksums.py** — Check files against a checksum list (sha256sum, BSD, or JSON manifests). Also check or rebuild split archives (`--join`). Check-only mode writes nothing. An existing `--out` file is never overwritten.
 
-### Why stdlib-only matters
+**split_build.py** — Recover CSS/JS source from a built single-file HTML page, or `--check` that a source folder rebuilds the page's JS/CSS byte for byte. Refuses to write if the split would not be lossless, and will not overwrite existing source files.
 
-No pip install. No virtualenv. No supply-chain risk from third-party packages. Copy the scripts, run them, done. They've been tested across the projects in this repo.
-
-### Who it's for
-
-Solo developers, AI-agent operators, and anyone shipping builds who wants a privacy and integrity pass without adopting a platform.
+**test_scripts.py** — Bundled unittest suite covering all four scripts, using synthetic data only.
 
 ### What's NOT included
 
-No GUI, no dashboard, no hosted service. Command-line scripts you run locally. If you want managed monitoring, that's a different product.
+No hosted service, no dashboard, no auto-install into your repo. These are scripts you run locally. `audit_server.py` is a defensive check of your own server, not a general-purpose scanner for other people's systems.
 
-### Updates
+### Requirements
 
-Bug fixes and new scan patterns as needed. MIT licensed.
-
-### Links
-
-- Scripts: github.com/xXGxGXx/boq-income-pipeline/tree/main/scripts
-- LICENSE: github.com/xXGxGXx/boq-income-pipeline/blob/main/LICENSE
+Python 3. No third-party packages.
 
 ---
 
 ## Cover image brief (for Canva)
 
-Dark background. Monospace terminal aesthetic. One line: "No secrets in this commit." Below: "Four scripts. Zero dependencies." Minimal. No stock photos.
+Dark charcoal background. Left: four short monospace filenames stacked (`privacy_scan.py`, `audit_server.py`, `verify_checksums.py`, `split_build.py`). Right, one line: "Stdlib only. No install." Below: "Privacy and Integrity Toolkit — A$19." Accent in a single muted green or amber. No stock photos, no lock icons, no shields.

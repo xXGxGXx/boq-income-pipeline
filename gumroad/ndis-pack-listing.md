@@ -1,50 +1,50 @@
 # Gumroad Listing: NDIS SIL Compliance Starter Pack
 
-**Price:** $37 AUD (one-time)
-**Category:** Business > Compliance
-**Tags:** NDIS, SIL, compliance, Australia, templates, prompts, workflow, registration
+**Price:** A$37 (one-time)
+**Category:** Business / Documents and templates
+**Tags:** NDIS, SIL, Australia, Module 5A, templates, prompts, providers
 
 ---
 
 ## Title
-NDIS SIL Compliance Starter Pack — Prompts, Templates and Workflow for Module 5A / Group 0138
+NDIS SIL Compliance Starter Pack — Module 5A Workflow, Prompts and Templates
 
 ## Subtitle
-Mandatory pain for SIL providers. Registration rules changed October 2026. Get audit-ready fast.
+A starting point for Australian SIL providers organising Core Module and Module 5A evidence. Not legal advice.
 
 ## Description
 
-### The problem
-
-If you provide Supported Independent Living (SIL) under the NDIS, compliance is no longer optional. Registration requirements tightened through 2026, with SIL-specific rules becoming compulsory from October 26, 2026. Providers who can't demonstrate Module 5A / group 0138 alignment risk registration issues, audit findings, and lost clients. Most compliance help is expensive consulting or generic templates that don't map to the actual NDIS Commission framework.
+From 1 July 2026, Supported Independent Living (SIL) must be delivered under registration group 0138. Registration rules changed in October 2026: unregistered providers had until 1 October 2026 to apply. This pack helps you organise a first draft of evidence. It does not register you, pass an audit, or replace guidance from the NDIS Quality and Safeguards Commission.
 
 ### What's inside
 
-**Prompts** — AI-ready prompt library covering SIL compliance documentation, incident reporting language, and support plan alignment for Module 5A.
+- **Workflow** covering the four registration pathways (already registered; applied before 1 October 2026; did not apply; new provider) and evidence gathering for the Core Module plus Module 5A (supported decision-making, safeguarding, practice governance, and agreements about tenancy, housing and support)
+- **2 AI prompts** (paste into Claude, ChatGPT, Grok or similar, then review and edit every output):
+  - Module 5A self-assessment generator
+  - Support-worker induction checklist generator
+- **2 editable Markdown templates** (Word-ready outlines):
+  - SIL Module 5A self-assessment outline
+  - Support-worker induction checklist (Day 1 / Week 1 / sign-off)
 
-**Templates** — Fill-in-the-blank documents mapped to NDIS Commission expectations: policies, procedures, and evidence registers.
+### How to use
 
-**Workflow** — Step-by-step process for assembling and maintaining your compliance pack, from initial registration through ongoing audit readiness.
+1. Read the workflow and confirm your registration pathway
+2. Run the prompts with your organisation details
+3. Adapt the templates to your organisation
+4. Keep evidence of daily practice, not only pre-audit paperwork
 
-### Who it's for
+### What's NOT included
 
-SIL providers, support coordinators, and NDIS consultants in Australia who need to move fast on compliance without hiring a full-time admin.
+This pack does not file a registration, complete a certification audit, or guarantee a Commission outcome. Prompt outputs are drafts you must review and edit. Official requirements can change.
 
-### Important disclaimers
+### Disclaimer
 
-This pack is not legal advice. NDIS Commission requirements change — verify all content against current NDIS Commission guidance before relying on it for registration or audit purposes. Registration rules changed October 2026; confirm the latest requirements on the NDIS Commission website.
+This is an educational starter resource, not legal advice, and not a substitute for professional or NDIS Commission guidance. Always verify against current NDIS Quality and Safeguards Commission requirements. Registration rules changed in October 2026. No registration, audit, or compliance outcome is guaranteed.
 
-### Updates
-
-Reviewed against NDIS Commission updates. MIT licensed for the template structure; adapt freely for your organisation.
-
-### Links
-
-- Product assets: github.com/xXGxGXx/boq-income-pipeline/tree/main/products/ndis-sil-compliance-pack
-- LICENSE: github.com/xXGxGXx/boq-income-pipeline/blob/main/LICENSE
+Pack contents last updated: 2026-11-23.
 
 ---
 
 ## Cover image brief (for Canva)
 
-Clean white background. NDIS-style blue accent. One line: "SIL registration rules changed October 2026." Below: "Be audit-ready in a weekend." Professional, no stock photos of people. Sans-serif.
+Clean and professional. Navy or deep teal background, white type. Title: "NDIS SIL Compliance Starter Pack." Subline: "Module 5A workflow, prompts and templates." Price mark: "A$37." Small footer: "Not legal advice. Verify current NDIS Commission requirements." No official NDIS logo, no Commission branding, and no ticks or badges that imply certified or approved.

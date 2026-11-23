@@ -1,5 +1,5 @@
 # Device Orchestration Stack — Design Doc
-**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture + semantic memory + auto-fail-resolution + AI-side watchdog)
+**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture + semantic memory + auto-fail-resolution + AI-side watchdog + meta-improvement engine)
 
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
@@ -229,7 +229,7 @@ Built from research into self-healing agent patterns (AI Advances, Copyl, CXAS S
 **Circuit breaker:** sustained outages trip a breaker per layer/backend — stops hammering a dead system, opens a fallback path instead of piling up retries.
 
 **Fallback chains (compose with retry + breaker):**
-- Primary path (e.g., Termux) → 3 retries exhausted → secondary path (proot) → different backend/supplier to avoid同源故障 → semantic cache of prior similar resolutions → deterministic rule/preset fallback that guarantees *some* response
+- Primary path (e.g., Termux) → 3 retries exhausted → secondary path (proot) → different backend/supplier to avoid correlated failure → semantic cache of prior similar resolutions → deterministic rule/preset fallback that guarantees *some* response
 - The chain accepts graceful degradation in exchange for forward progress — never a hard stop
 
 **Auto-method-switching (user's "try other methods" requirement):**
@@ -272,6 +272,7 @@ Built from research into self-healing agent patterns (AI Advances, Copyl, CXAS S
 16. **Semantic memory layer** — vector embeddings alongside flat-text checkpoints; hybrid search (vector + keyword + metadata); selective write ADD/UPDATE/INVALIDATE/NOOP; cosine dedup on write path (threshold 0.95, zero-LLM lexical default); four timestamps per fact; decay + consolidation background jobs; raw episodes preserved; local embedder in proot (single-grant compliant)
 17. **Auto-fail-resolution engine** — five-stage self-healing cycle (detect → diagnose → repair → validate → adapt); error classification routing (transient/permanent/logic/semantic); retry with exponential backoff + jitter; circuit breakers per layer; fallback chains with graceful degradation; automatic alternative-method search on non-resolution; evidence-backed human escalation only for high-risk irreversible actions; integrates with dead-man's switch, Module E, Module H, cost ceiling, and auto-continue gate
 18. **AI-side dead-man's switch** — lightweight watchdog pings the model on a short interval; if the API hangs or the model starts looping silently, auto-restarts the session or falls back to a cached response; closes the gap where a non-responsive model looks like normal idle time; integrates with Module I's detection stage and Module B's capability registry
+19. **Meta-improvement engine** — treats the stack's own architecture as an optimizable artifact; periodically reads accumulated lessons from Module H (resolved failure patterns, score trends, cost data) and Module I's adaptation deposits; proposes concrete design changes — swapping an underperforming layer, tightening a fallback chain, reordering a targeting ladder — with evidence from real usage data; each proposal is itself scored by the auto-continue gate before being surfaced; human is final approver; the engine improves the improver without unsupervised self-modification of critical paths
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -315,3 +316,6 @@ Built from research into self-healing agent patterns (AI Advances, Copyl, CXAS S
 - Adaptation deposits resolved patterns into Module H — the engine gets faster over time
 - Auto-method-switching honors the standing rule: walls trigger wider scans, never narrower focus
 - AI-side watchdog ping interval is short enough to catch hangs before the user notices, long enough to avoid false positives from slow-but-valid responses
+- Meta-improvement proposals are evidence-backed from real usage metrics, not speculative — the engine reads data before it suggests changes
+- Meta-improvement runs on a slow cadence (daily or per-N-sessions) so it doesn't compete with real-time work for compute
+- Critical-path changes from meta-improvement always require human approval before commit

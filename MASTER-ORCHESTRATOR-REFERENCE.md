@@ -1,4 +1,5 @@
 # MASTER ORCHESTRATOR — Complete Reference Document
+
 **Date:** 2026-11-23 | **Owner:** Kyle Beskin-Clark (xXGxGXx) | **Status:** Design locked, pre-build
 **Purpose:** Single pasteable handoff document. Any AI platform reading this can continue the project without prior context.
 
@@ -261,6 +262,40 @@ Silent fallback: Termux primary → proot secondary. Never hard-fail. Zero runti
 
 ---
 
+## AUTOMATION FORGE v4.2 (ADDED 2026-11-23)
+
+Android-native automation app — a device-side execution layer for scripted workflows.
+
+**Capabilities:** WorkManager scheduling (best-effort, subject to Android battery policy), SQLite audit database logging every execution event, SAF file importer for picking local files, basic webhook URL screening (hostname/IP filtering — not a complete SSRF boundary), visual workflow builder (note, delay, notification steps; raw JSON available for advanced workflows), quick workflow builder callbacks, work cancellation control, repeat scheduling.
+
+**Manifest:** INTERNET + POST_NOTIFICATIONS permissions; cleartext traffic disabled; Material dark theme (#12121A, accent #7C5CFF); single MainActivity launcher.
+
+**Validation (v4.2 report):** 12 passes — native-bridge.js syntax, app.js syntax, Android manifest XML parse, SQLite audit helper, worker execution audit integration, quick builder callbacks, audit bridge endpoints, repeat scheduling retained, work cancellation retained, SAF importer retained, basic webhook screening. Not run: Gradle compilation (SDK unavailable), APK install, physical device test.
+
+**Limitations:** WorkManager subject to system/battery policy; workflow retries can replay earlier side effects (design actions idempotent); webhook screening is basic hostname/IP filtering; SQLite history has no auto-pruning or export yet; visual builder covers note/delay/notification only.
+
+**Files:** AndroidManifest.xml, styles.xml, native-bridge.js, app.js, VALIDATION-REPORT.txt.
+
+---
+
+## RECALL MASTER (ADDED 2026-11-23)
+
+Termux-side Python recall script — on-device memory retrieval with built-in self-test.
+
+**Self-test:** 10 tests, ~0.001s runtime, expected output "Ran 10 tests in 0.001s / OK".
+
+**Workflow:** nano recall_master.py → paste code → Ctrl+O, Enter → Ctrl+X → chmod +x recall_master.py → python3 recall_master.py self-test.
+
+**One-liner alternative:** if code is already on clipboard, same nano/paste/save/chmod/run sequence.
+
+**Blank-page download fixes:** long-press link → Copy link address → open in Chrome/Firefox; or use Download link; check browser Downloads folder.
+
+**Python missing fix:** pkg update && pkg install python, then rerun.
+
+**Verify:** python3 -m py_compile recall_master.py && python3 recall_master.py self-test.
+
+---
+
 ## KEY DECISIONS LOG (2026-11-23)
 
 1. Automatic checkpointing, no manual flagging [locked]
@@ -273,6 +308,8 @@ Silent fallback: Termux primary → proot secondary. Never hard-fail. Zero runti
 8. Bots: off the table unless proven useful; no fail points tolerated [user rule]
 9. Box: build on Responses API/Agents SDK, NOT Agent Builder (retires 2026-11-30) [locked]
 10. Desktop Commander Remote: treat as optional local-ops connector, not core dependency [locked]
+11. Automation Forge v4.2: Android automation layer with WorkManager + SQLite audit [locked]
+12. recall_master.py: Termux-side recall with self-test [locked]
 
 ---
 
@@ -280,7 +317,7 @@ Silent fallback: Termux primary → proot secondary. Never hard-fail. Zero runti
 
 **Resolved:** Module F allowlist global vs per-device → GLOBAL.
 
-**Still open (20):** full list in DESIGN.md — includes proot vs Termux performance on media-heavy workloads (relevant to media viewer), ARGUS deeper inspection details, HID gesture scope expansion, and others. Check DESIGN.md for the complete enumerated list.
+**Still open (20):** full list in DESIGN.md — includes proot vs Termux performance on media-heavy workloads (relevant to media viewer), ARGUS deeper inspection details, HID gesture scope expansion, Automation Forge Gradle/device validation pending, and others. Check DESIGN.md for the complete enumerated list.
 
 ---
 
@@ -296,6 +333,8 @@ Silent fallback: Termux primary → proot secondary. Never hard-fail. Zero runti
 8. **Cloud:** Base44 Superagent (Layer 6) + Box MCP (Layer 6.5)
 9. **Orchestration:** Hermes multi-agent (Layer 7) + Module C media hook + ARGUS pattern
 10. **Meta:** Refinement 19 meta-improvement engine + usage metrics dashboard (refinement 20 candidate)
+11. **Device execution:** Automation Forge v4.2 Gradle build + device validation
+12. **On-device recall:** recall_master.py deployed and self-tested in Termux
 
 ---
 
@@ -312,10 +351,11 @@ Module I and auto-continue loop already generate cost, score, and failure data. 
   - skills/auto-continue-loop/auto_continue_loop.py
   - skills/drive-checkpoint/SKILL.md
   - MASTER-ORCHESTRATOR-REFERENCE.md (this file)
+  - Automation Forge: AndroidManifest.xml, styles.xml, native-bridge.js, app.js, VALIDATION-REPORT.txt
+  - recall_master.py (Termux-side)
+
 - **Drive primary:** 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA
 - **Drive backup:** 1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo
 - **Memory:** auto-loaded in Grok sessions (664 conversations since 2026-09-04)
-
----
 
 *End of master reference. Paste into any AI platform to continue.*

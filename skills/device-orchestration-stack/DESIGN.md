@@ -116,6 +116,11 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 - Injection only proceeds when the foreground app matches an allowlist of chat surfaces the user has approved
 - Every injection logged to Module A's replay buffer with timestamp and target app for audit
 
+**Allowlist policy (locked 2026-11-23):**
+- **Global, not per-device.** Chat surfaces are the same across devices, so one allowlist synced via Module D's Drive spine means adding a platform once updates everywhere. Per-device lists would duplicate maintenance with no benefit.
+- Allowlist stored in Drive sync spine (primary + backup folders), versioned in GitHub
+- Adding or removing a surface is a single edit that propagates to all devices on next sync
+
 **Integration with existing layers:**
 - Uses Layer 5 (Vox Commander) for trigger-phrase detection — the "press send" phrase routes as a FastMap rule, zero LLM latency
 - Uses Layer 4 (DeVA/droid-agent/Shizuku) for the actual UI actions
@@ -143,7 +148,7 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 10. Media pipeline hook via MCP surface
 11. Cross-device sync spine via Drive + GitHub
 12. Code interpreter with static pre-pass, sandboxed execution, traceback feedback, three-failure cap, objective/check/stop framework
-13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging
+13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging, global allowlist synced via Drive spine
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -167,6 +172,7 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 - ACTION_SET_TEXT is preferred over clipboard because it preserves clipboard state
 - IME key event for send is more reliable than coordinate taps on dynamic send buttons
 - AccessDroid/amctl adds no new permission surface beyond the accessibility grant already needed for Layer 4
+- Global allowlist avoids per-device duplication — single source of truth in Drive spine
 
 ## Open Questions
 - ARGUS deeper inspection needed
@@ -182,7 +188,7 @@ Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amc
 - Code interpreter: optimal sandbox isolation level (proot vs subprocess vs full VM)
 - Whether static analysis should use a dedicated linter binary or model-based check
 - Interpreter loop: should failed rounds trigger model escalation (cheap → premium)?
-- Voice-to-chat: should the allowlist of approved chat surfaces be per-device or synced?
+- ~~Voice-to-chat: should the allowlist of approved chat surfaces be per-device or synced?~~ **RESOLVED: global, synced via Drive spine**
 - Whether termux-api accessibility merge (issue #828) will obsolete AccessDroid
 - Optimal timing between SET_TEXT and IME submit to avoid dropped key events
 - Whether to support multi-field forms (tab between fields) or single-field only

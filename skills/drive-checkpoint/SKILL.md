@@ -32,13 +32,14 @@ End of every conversation turn where something durable comes up. Durable means a
      - Refs: <file paths / commands / SHAs touched>
      - Standing: <any standing instruction added or modified, or "none">
      ```
+   - Tool resolution: do not hard-code tool names. Search connected tools for the action "create or update file in Google Drive" and invoke whatever tool matches. If the primary search returns nothing, try "upload file to Drive" or "write Drive document".
 3. Verify the write: the tool response must return a file ID. If it does not, treat as failure and go to step 5.
 4. Sync the same fact to the local memory file via edit_memory — one fact per bullet, dated. This step is mandatory, not optional.
-5. On Drive failure: retry once against the alternate folder ID. If both fail, push the checkpoint as a commit to this repo at `skills/drive-checkpoint/fallbacks/checkpoint-YYYY-MM-DD.md` using github___create_or_update_file, and report the fallback aloud with the commit reference.
+5. On Drive failure: retry once against the alternate folder ID using the same action-based lookup. If both fail, push the checkpoint as a commit to this repo at `skills/drive-checkpoint/fallbacks/checkpoint-YYYY-MM-DD.md` by searching for the "create or update file in GitHub" action. Report the fallback aloud with the commit reference.
 6. Confirm aloud: file name landed, plus whether it was primary, backup, or GitHub fallback. Never assume silently.
 
 ## Session start
-On the first turn of a new session, check whether today's checkpoint file exists in the primary folder. If missing and durable content is expected, create it. If present, no action needed beyond normal turn-end behavior.
+On the first turn of a new session, check whether today's checkpoint file exists in the primary folder (search Drive for `checkpoint-YYYY-MM-DD`). If missing and durable content is expected, create it. If present, no action needed beyond normal turn-end behavior.
 
 ## Rules
 - Turn-based, not audio-streaming. One write per durable turn.
@@ -46,6 +47,7 @@ On the first turn of a new session, check whether today's checkpoint file exists
 - Keep entries short and factual. No editorializing.
 - "Automation" from the user means autonomous real-time execution during the conversation, never scheduled reminders.
 - If edit_memory fails, retry once. If it still fails, note it in the Drive entry and report aloud.
+- Tool names are resolved at runtime via action search, never assumed from memory. This makes the skill survive connector renames and additions.
 
 ## Definition of done
 A checkpoint turn is complete only when all of these are true:
@@ -55,4 +57,4 @@ A checkpoint turn is complete only when all of these are true:
 - [ ] No credentials or sensitive data in the written content
 
 ## Recovery
-If memory is lost or corrupted: read the newest `checkpoint-*.md` from the primary Drive folder, reconstruct facts in reverse-chronological order, re-sync to the memory file, and commit a recovery note to this repo at `skills/drive-checkpoint/recovery-YYYY-MM-DD.md`.
+If memory is lost or corrupted: read the newest `checkpoint-*.md` from the primary Drive folder (action search: "read file from Google Drive"), reconstruct facts in reverse-chronological order, re-sync to the memory file, and commit a recovery note to this repo at `skills/drive-checkpoint/recovery-YYYY-MM-DD.md`.

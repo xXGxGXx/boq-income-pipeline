@@ -1,5 +1,5 @@
 # Device Orchestration Stack — Design Doc
-**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter)
+**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay)
 
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
@@ -93,6 +93,43 @@ Built from research into Claude Code's internal verification practices, Daisy Ho
 - Not a replacement for Claude Code's file-editing agent — it's the verification engine that wraps it
 - Not a general-purpose cloud sandbox (E2B) — local-first, privacy-preserving
 
+### Module F — Voice-to-Chat Injection Overlay (2026-11-23 addition)
+Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amctl, BiBi-Keyboard, and termux-api accessibility work. Gives the user full text-chat capability on any AI platform while retaining voice-chat parity — speak into any chat bar, say "press send," and it fires.
+
+**Core capability:**
+- Voice dictation captured by Vox Commander's FastMap layer (Layer 5) matching a trigger phrase like "press send"
+- Foreground-app check first (termux-api `app_foreground` or droid-agent `state`) to confirm which chat is active — never injects blind
+- Text injection into the focused editable field via AccessibilityService `ACTION_SET_TEXT` (primary, atomic, instant, proven across DeVA/Handy/BiBi-Keyboard)
+- Clipboard-paste fallback (`ACTION_PASTE`) if SET_TEXT is rejected by the target app
+- Optional custom-IME AIDL injection as tertiary path for apps that block both
+- Send execution via IME key event (`key enter` / voice-droid's IME submit) which fires the field's native submit action — same as tapping the blue send button
+- droid-agent's compound `type_into` workflow (focus field + type in one call) reduces round-trips when ADB path is used
+
+**Termux-side bridge:**
+- AccessDroid APK + amctl CLI (yashas-13) exposes taps/types/key events as Termux broadcasts — zero root, zero ADB cable, works alongside existing Termux grants
+- termux-api accessibility addition (issue #828) is not merged; Automate workaround scripts exist as interim; AccessDroid is the cleaner path
+- amctl commands: `type "text"`, `tapref @pN`, `key enter`, `snap` (UI tree with refs), `state`-equivalent via `amctl tree`
+
+**Safety guardrails (from Handy AI and Phone Control MCP patterns):**
+- Spoken confirmation before tapping Send on anything destructive (payments, deletes, bulk actions) — Handy AI's pattern
+- A visible Stop affordance (floating control or notification action) that halts the injection sequence immediately
+- Injection only proceeds when the foreground app matches an allowlist of chat surfaces the user has approved
+- Every injection logged to Module A's replay buffer with timestamp and target app for audit
+
+**Integration with existing layers:**
+- Uses Layer 5 (Vox Commander) for trigger-phrase detection — the "press send" phrase routes as a FastMap rule, zero LLM latency
+- Uses Layer 4 (DeVA/droid-agent/Shizuku) for the actual UI actions
+- Uses Layer 2 (termux-mcp) to invoke amctl/AccessDroid commands and read UI tree state
+- Uses Module B (capability registry) to verify accessibility service and foreground-app detection are alive before attempting
+- Uses Module A (replay buffer) to log every voice→inject→send cycle for macro reuse
+- Uses Module D (sync spine) so approved chat allowlists and trigger phrases sync across devices
+- Compatible with any AI platform's text chat — Claude, ChatGPT, Gemini, Perplexity web — because it operates at the OS input level, not the app API level
+
+**Non-goals:**
+- Not a replacement for native voice mode on platforms that have it — it's the bridge for platforms that don't
+- Not full phone automation — scoped to text injection and send on approved chat surfaces
+- Does not bypass platform-level content policies; it only automates the user's own keystrokes
+
 ## Locked Refinements
 1. Shizuku screenshot path over AutoX
 2. Swappable voice router plugins
@@ -106,6 +143,7 @@ Built from research into Claude Code's internal verification practices, Daisy Ho
 10. Media pipeline hook via MCP surface
 11. Cross-device sync spine via Drive + GitHub
 12. Code interpreter with static pre-pass, sandboxed execution, traceback feedback, three-failure cap, objective/check/stop framework
+13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -124,6 +162,11 @@ Built from research into Claude Code's internal verification practices, Daisy Ho
 - Traceback feedback is the highest-value signal; never skip it
 - Three-failure cap prevents infinite repair loops
 - Interpreter iterations count against cost ceiling
+- Voice-to-chat uses FastMap for zero-latency trigger detection
+- Foreground-app check is a single cheap termux-api call before any injection
+- ACTION_SET_TEXT is preferred over clipboard because it preserves clipboard state
+- IME key event for send is more reliable than coordinate taps on dynamic send buttons
+- AccessDroid/amctl adds no new permission surface beyond the accessibility grant already needed for Layer 4
 
 ## Open Questions
 - ARGUS deeper inspection needed
@@ -139,3 +182,7 @@ Built from research into Claude Code's internal verification practices, Daisy Ho
 - Code interpreter: optimal sandbox isolation level (proot vs subprocess vs full VM)
 - Whether static analysis should use a dedicated linter binary or model-based check
 - Interpreter loop: should failed rounds trigger model escalation (cheap → premium)?
+- Voice-to-chat: should the allowlist of approved chat surfaces be per-device or synced?
+- Whether termux-api accessibility merge (issue #828) will obsolete AccessDroid
+- Optimal timing between SET_TEXT and IME submit to avoid dropped key events
+- Whether to support multi-field forms (tab between fields) or single-field only

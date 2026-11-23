@@ -60,6 +60,7 @@ Quarterly title and spec refreshes. Version history preserved in the repo for ro
 - Full spec: github.com/xXGxGXx/boq-income-pipeline/blob/main/skills/tiered-memory-system/v3.2.md
 - Dead Man's Switch repo: github.com/xXGxGXx/dead-mans-switch
 - Landing page: https://dead-mans-switch-landing-kylebesk1-7661.vercel.app
+- LICENSE: MIT — github.com/xXGxGXx/boq-income-pipeline/blob/main/LICENSE
 
 ---
 

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1020">
+<meta name="description" content="Android-first offline automation workspace and local toolbox.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<title>Automation Forge v3 • Mobile Operations Lab</title>
+</head>
+<body>
+<div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand-lockup"><div class="brand-mark">⚒</div><div><div class="brand-title">AUTOMATION FORGE <span>V3</span></div><div class="brand-sub">ANDROID-FIRST · OFFLINE-CAPABLE · MODULAR</div></div></div>
+    <div class="top-actions"><span id="networkBadge" class="status-chip"><i></i> Checking</span><button class="icon-button" data-action="export" aria-label="Export backup" title="Export backup">⇩</button><button class="icon-button" data-action="install" id="installBtn" hidden aria-label="Install app" title="Install app">＋</button></div>
+  </header>
+
+  <section class="hero-panel">
+    <div class="hero-copy"><div class="eyebrow"><span class="pulse-dot"></span> MOBILE OPERATIONS LAB</div><h1>Make the repeatable<br><em>run itself.</em></h1><p>A local-first command centre for workflows, file tools, batch processing, automation recipes and carefully controlled connections.</p><div class="hero-actions"><button class="button button-primary" data-action="quick-task">＋ Capture task</button><button class="button button-glass" data-action="open-toolbox">Open toolbox ↗</button></div></div>
+    <div class="hero-orbit" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="core-glyph">⚙</div><div class="orbit-node node-one">ZIP</div><div class="orbit-node node-two">SHA</div><div class="orbit-node node-three">FLOW</div></div>
+  </section>
+
+  <section class="metric-row" aria-label="Workspace metrics">
+    <div class="metric-card"><span class="metric-label">OPEN TASKS</span><strong id="metricTasks">0</strong><small>In your queue</small></div>
+    <div class="metric-card"><span class="metric-label">WORKFLOWS</span><strong id="metricFlows">0</strong><small>Ready to launch</small></div>
+    <div class="metric-card"><span class="metric-label">FILES INDEXED</span><strong id="metricFiles">0</strong><small>Metadata only</small></div>
+    <div class="metric-card"><span class="metric-label">RUN SUCCESS</span><strong id="metricRuns">—</strong><small>Recent executions</small></div>
+  </section>
+
+  <nav class="tab-rail" aria-label="Main sections">
+    <button class="tab active" data-view="home">⌂ Overview</button>
+    <button class="tab" data-view="tasks">☑ Tasks</button>
+    <button class="tab" data-view="flows">⟳ Workflows</button>
+    <button class="tab" data-view="engine">⚡ Engine</button>
+    <button class="tab" data-view="toolbox">▦ Toolbox</button>
+    <button class="tab" data-view="connections">⌁ Connections</button>
+    <button class="tab" data-view="settings">⚙ Settings</button>
+  </nav>
+
+  <main>
+    <section class="view active" id="view-home">
+      <div class="section-heading"><div><div class="eyebrow">COMMAND DECK</div><h2>Workspace overview</h2></div><span class="subtle" id="lastSaved">Local workspace</span></div>
+      <div class="dashboard-grid">
+        <article class="panel panel-wide"><div class="panel-head"><div><span class="panel-kicker">NEXT ACTIONS</span><h3>Focus queue</h3></div><button class="text-button" data-action="quick-task">＋ Add</button></div><div id="homeTasks" class="stack-list"></div></article>
+        <article class="panel"><div class="panel-head"><div><span class="panel-kicker">REPEATABLE SYSTEMS</span><h3>Quick launch</h3></div><button class="text-button" data-view="flows">All →</button></div><div id="homeFlows" class="stack-list"></div></article>
+        <article class="panel"><div class="panel-head"><div><span class="panel-kicker">DEVICE CAPABILITIES</span><h3>Runtime check</h3></div><span class="tag tag-live">LIVE</span></div><div id="capabilityList" class="capability-list"></div></article>
+      </div>
+      <div class="section-heading top-gap"><div><div class="eyebrow">FORGE PRINCIPLES</div><h2>Built to be useful, not needy</h2></div></div>
+      <div class="principle-grid"><div class="principle-card"><b>01 / AUTOMATE</b><h3>Reduce repeat work</h3><p>Run safe local actions in controlled sequences. Human approval stays in the loop for consequential steps.</p></div><div class="principle-card"><b>02 / INTEGRATE</b><h3>One coherent toolbox</h3><p>Bring file intake, checksums, text/data utilities, workflows and connectors into one mobile workspace.</p></div><div class="principle-card"><b>03 / STANDALONE</b><h3>Keep the core local</h3><p>No account, server or external library is needed for the core tools. Network connectors are optional.</p></div></div>
+    </section>
+
+    <section class="view" id="view-tasks">
+      <div class="section-heading"><div><div class="eyebrow">WORK QUEUE</div><h2>Tasks & projects</h2></div><button class="button button-primary" data-action="quick-task">＋ New task</button></div>
+      <div class="toolbar-card"><input id="taskSearch" type="search" placeholder="Search tasks or project names…" aria-label="Search tasks"><select id="taskFilter" aria-label="Task filter"><option value="open">Open tasks</option><option value="all">All tasks</option><option value="done">Completed</option></select></div>
+      <div id="taskList" class="stack-list"></div>
+    </section>
+
+    <section class="view" id="view-flows">
+      <div class="section-heading"><div><div class="eyebrow">REUSABLE PLAYBOOKS</div><h2>Workflow studio</h2></div><button class="button button-primary" data-action="new-flow">＋ New flow</button></div>
+      <div class="notice-card"><b>Safe command language</b><p>Flows use a small, allow-listed command set. There is no <code>eval</code>, shell execution, arbitrary script execution or hidden remote code.</p><button class="text-button" data-action="show-commands">View command reference ↗</button></div>
+      <div id="flowList" class="flow-grid"></div>
+      <div class="section-heading top-gap"><div><div class="eyebrow">STARTER BLUEPRINTS</div><h2>Load a recipe</h2></div></div>
+      <div id="recipeList" class="recipe-grid"></div>
+    </section>
+
+    <section class="view" id="view-engine">
+      <div class="section-heading"><div><div class="eyebrow">LOCAL EXECUTION CORE</div><h2>Workflow engine</h2></div><span class="tag tag-live">SAFE RUNNER</span></div>
+      <div class="engine-panel">
+        <div class="engine-topline"><div><span class="panel-kicker">SELECTED PLAYBOOK</span><h3 id="engineFlowName">Choose a workflow</h3></div><span class="engine-state" id="engineState">IDLE</span></div>
+        <label class="field-label" for="engineFlow">Workflow</label><select id="engineFlow"></select>
+        <div class="engine-progress"><div id="engineBar"></div></div><div class="engine-progress-meta"><span id="engineProgressText">Ready when you are</span><span id="engineProgressPct">0%</span></div>
+        <div class="engine-controls"><button class="button button-primary" data-action="engine-run">▶ Run workflow</button><button class="button button-secondary" data-action="engine-pause">Ⅱ Pause</button><button class="button button-danger" data-action="engine-stop">■ Stop</button></div>
+        <div class="engine-footnote">Runs only supported local actions. Checkpoints pause for your approval. The app must remain open for foreground execution.</div>
+      </div>
+      <div class="section-heading top-gap"><div><div class="eyebrow">EXECUTION HISTORY</div><h2>Run log</h2></div><button class="text-button" data-action="clear-runs">Clear history</button></div>
+      <div id="runLog" class="stack-list"></div>
+      <div class="section-heading top-gap"><div><div class="eyebrow">COMMAND TOOLKIT</div><h2>Available actions</h2></div></div>
+      <div class="command-grid" id="commandGrid"></div>
+    </section>
+
+    <section class="view" id="view-toolbox">
+      <div class="section-heading"><div><div class="eyebrow">LOCAL UTILITIES</div><h2>Toolbox</h2></div><span class="tag tag-live">ON-DEVICE</span></div>
+      <div class="toolbox-layout">
+        <article class="tool-card tool-card-wide"><div class="tool-head"><span class="tool-icon">▤</span><div><h3>File intake & integrity</h3><p>Batch inspect files, compute SHA-256 where available, and identify exact duplicates.</p></div></div>
+          <div class="file-drop" id="fileDrop"><div class="drop-icon">⇧</div><b>Choose files from your phone</b><span>Multiple selection supported. File contents are processed locally and are not uploaded.</span><div class="toolbar"><button class="button button-primary" data-action="pick-files">Select files</button><button class="button button-secondary" data-action="pick-folder">Select folder</button></div><input id="fileInput" class="visually-hidden" type="file" multiple><input id="folderInput" class="visually-hidden" type="file" multiple webkitdirectory directory></div>
+          <div class="file-summary" id="fileSummary"><span>No files indexed yet.</span><span id="dupCount">0 exact duplicates</span></div><div id="fileTable" class="file-list"></div>
+          <div class="toolbar top-gap"><button class="button button-secondary" data-action="scan-duplicates">Scan duplicates</button><button class="button button-secondary" data-action="export-file-index">Export index CSV</button><button class="button button-secondary" data-action="export-checksum-manifest">Export SHA manifest</button><button class="button button-secondary" data-action="clear-file-index">Clear index</button></div>
+          <div class="tool-note">The index stores file names, sizes, dates and fingerprints only. Original files stay where they are. A true SHA-256 is marked separately from a fallback signature.</div>
+        </article>
+
+        <article class="tool-card"><div class="tool-head"><span class="tool-icon">▧</span><div><h3>Batch rename & ZIP</h3><p>Create renamed copies in one ZIP. Originals are never renamed or overwritten.</p></div></div>
+          <div class="form-stack"><div><label class="field-label" for="renamePrefix">Prefix</label><input id="renamePrefix" placeholder="e.g. project-"></div><div><label class="field-label" for="renameSuffix">Suffix</label><input id="renameSuffix" placeholder="e.g. -review"></div><div><label class="field-label" for="renameFind">Find text (optional)</label><input id="renameFind" placeholder="old-name"></div><div><label class="field-label" for="renameReplace">Replace with</label><input id="renameReplace" placeholder="new-name"></div><button class="button button-primary" data-action="zip-renamed">Build renamed ZIP</button><div id="renamePreview" class="mini-output">Select files first to preview names.</div></div>
+        </article>
+
+        <article class="tool-card"><div class="tool-head"><span class="tool-icon">⌗</span><div><h3>SHA-256 text hash</h3><p>Generate a cryptographic digest for text you enter.</p></div></div><textarea id="hashInput" placeholder="Paste text to hash…"></textarea><button class="button button-secondary top-gap" data-action="hash-text">Calculate SHA-256</button><div id="hashOutput" class="code-output">Digest appears here.</div></article>
+
+        <article class="tool-card tool-card-wide"><div class="tool-head"><span class="tool-icon">{ }</span><div><h3>JSON & CSV workbench</h3><p>Validate, format, minify JSON or convert CSV rows to JSON.</p></div></div><label class="field-label" for="dataInput">Input data</label><textarea id="dataInput" class="large-textarea" placeholder='Paste JSON or CSV here…'></textarea><div class="toolbar top-gap"><button class="button button-secondary" data-action="json-format">Format JSON</button><button class="button button-secondary" data-action="json-minify">Minify JSON</button><button class="button button-primary" data-action="csv-convert">CSV → JSON</button><button class="button button-secondary" data-action="json-csv">JSON → CSV</button><button class="button button-secondary" data-action="copy-data-output">Copy output</button></div><label class="field-label top-gap" for="dataOutput">Output</label><textarea id="dataOutput" class="large-textarea" readonly placeholder="Processed output will appear here…"></textarea><div id="dataStatus" class="tool-note">JSON and CSV processing happens locally in this browser.</div></article>
+
+        <article class="tool-card"><div class="tool-head"><span class="tool-icon">Aa</span><div><h3>Text transformer</h3><p>Case conversion, slug creation and whitespace cleanup.</p></div></div><textarea id="textInput" placeholder="Enter text…"></textarea><div class="toolbar top-gap"><button class="small-button" data-action="text-upper">UPPER</button><button class="small-button" data-action="text-lower">lower</button><button class="small-button" data-action="text-title">Title</button><button class="small-button" data-action="text-slug">slug</button><button class="small-button" data-action="text-clean">Clean</button></div><textarea id="textOutput" class="top-gap" readonly placeholder="Result…"></textarea><button class="button button-secondary top-gap" data-action="copy-text">Copy result</button></article>
+
+        <article class="tool-card"><div class="tool-head"><span class="tool-icon">▥</span><div><h3>Image optimiser</h3><p>Resize and convert a selected image to JPEG or WebP.</p></div></div><input id="imageInput" type="file" accept="image/*"><div class="two-fields top-gap"><div><label class="field-label" for="imageMax">Max width</label><input id="imageMax" type="number" min="128" max="8000" value="1600"></div><div><label class="field-label" for="imageQuality">Quality</label><input id="imageQuality" type="number" min="0.2" max="1" step="0.05" value="0.82"></div></div><label class="field-label top-gap" for="imageFormat">Output format</label><select id="imageFormat"><option value="image/webp">WebP</option><option value="image/jpeg">JPEG</option></select><button class="button button-primary top-gap" data-action="optimise-image">Optimise & download</button><div id="imageStatus" class="tool-note">Image is processed in memory. The source file is not changed.</div></article>
+
+        <article class="tool-card"><div class="tool-head"><span class="tool-icon">⇄</span><div><h3>Text diff</h3><p>Compare two text versions and count changed lines.</p></div></div><textarea id="diffA" placeholder="Original text…"></textarea><textarea id="diffB" class="top-gap" placeholder="Updated text…"></textarea><button class="button button-secondary top-gap" data-action="diff-text">Compare versions</button><div id="diffOutput" class="mini-output">Difference summary appears here.</div></article>
+
+        <article class="tool-card"><div class="tool-head"><span class="tool-icon">▣</span><div><h3>Quick encoders</h3><p>URL and Base64 conversions for plain text.</p></div></div><textarea id="encodeInput" placeholder="Text to encode or decode…"></textarea><div class="toolbar top-gap"><button class="small-button" data-action="url-encode">URL encode</button><button class="small-button" data-action="url-decode">URL decode</button><button class="small-button" data-action="base64-encode">Base64 encode</button><button class="small-button" data-action="base64-decode">Base64 decode</button></div><textarea id="encodeOutput" class="top-gap" readonly placeholder="Result…"></textarea></article>
+      </div>
+    </section>
+
+    <section class="view" id="view-connections">
+      <div class="section-heading"><div><div class="eyebrow">OPTIONAL NETWORK EDGE</div><h2>Connections & integrations</h2></div><span class="tag tag-warn">OPT-IN</span></div>
+      <div class="notice-card"><b>Local core first. Network only when useful.</b><p>Connections are optional and require a URL you control, network access and the endpoint's permission rules. This app does not receive your ChatGPT plugin credentials.</p></div>
+      <div class="connection-grid">
+        <article class="panel"><div class="panel-head"><div><span class="panel-kicker">ANDROID DEVICE EDGE</span><h3>Termux:API bridge</h3></div><span class="tag tag-warn">OPTIONAL</span></div>
+          <p>Connect the PWA to a loopback-only Termux helper for Android toast, notification, speech, vibration and battery actions. No shell commands are accepted.</p>
+          <div class="form-stack top-gap"><div><label class="field-label" for="androidBridgeUrl">Local bridge endpoint</label><input id="androidBridgeUrl" type="url" value="http://127.0.0.1:8766/action" autocomplete="off"></div><div><label class="field-label" for="androidBridgeToken">Session token from Termux (never saved)</label><input id="androidBridgeToken" type="password" autocomplete="off" placeholder="Paste one-session bearer token"></div><div class="toolbar"><button class="button button-primary" data-action="test-android-bridge">Test bridge</button><button class="button button-secondary" data-action="send-android-toast">Send test toast</button><button class="button button-secondary" data-action="read-android-battery">Battery status</button></div><div id="androidBridgeStatus" class="tool-note">Bridge not connected. Start `start_android_bridge.sh` in Termux, then paste its fresh token here.</div></div>
+          <div class="tool-note">Setup requires the Termux Android app, the Termux:API companion app from the same trusted distribution source, and `pkg install termux-api`. The bridge binds to 127.0.0.1 only and the token expires when the bridge stops.</div>
+        </article>
+        <article class="panel"><div class="panel-head"><div><span class="panel-kicker">GENERIC API BRIDGE</span><h3>Webhook endpoints</h3></div><span class="tag">USER CONFIGURED</span></div>
+          <div class="form-stack"><div><label class="field-label" for="hookName">Connection name</label><input id="hookName" placeholder="e.g. My automation endpoint"></div><div><label class="field-label" for="hookUrl">HTTPS endpoint URL</label><input id="hookUrl" type="url" placeholder="https://example.com/webhook"></div><button class="button button-primary" data-action="add-webhook">＋ Save endpoint</button></div>
+          <div id="webhookList" class="stack-list top-gap"></div>
+          <div class="divider"></div><h3 class="subsection-title">Send a manual test payload</h3><label class="field-label" for="hookSelect">Endpoint</label><select id="hookSelect"></select><label class="field-label top-gap" for="hookToken">Bearer token (optional, not saved)</label><input id="hookToken" type="password" autocomplete="off" placeholder="Only used for this send"><label class="field-label top-gap" for="hookPayload">JSON payload</label><textarea id="hookPayload">{"source":"automation-forge","event":"manual-test"}</textarea><button class="button button-secondary top-gap" data-action="send-webhook">Send test payload</button><div id="hookStatus" class="tool-note">Network requests are only sent after you press the send button and confirm.</div>
+        </article>
+        <article class="panel"><div class="panel-head"><div><span class="panel-kicker">CONNECTED ECOSYSTEM</span><h3>Capability inventory</h3></div><button class="text-button" data-action="add-tool">＋ Add</button></div><div id="toolInventory" class="stack-list"></div><div class="divider"></div><div class="panel-kicker">DISCOVERY CHECKLIST</div><div id="discoveryList" class="stack-list top-gap"></div></article>
+      </div>
+      <div class="notice-card top-gap"><b>Optional ChatGPT app connections</b><p>Todoist can extend task/project/reminder workflows; Box can extend file search and cloud-file workflows. Their connection is separate from this standalone app and must be approved in ChatGPT. Neither is assumed to be connected.</p></div>
+    </section>
+
+    <section class="view" id="view-settings">
+      <div class="section-heading"><div><div class="eyebrow">DEVICE & DATA CONTROL</div><h2>Settings & portability</h2></div></div>
+      <div class="settings-grid">
+        <article class="panel"><span class="panel-kicker">BACKUP / RESTORE</span><h3>Move your workspace</h3><p>Export tasks, workflows, file-index metadata, integrations and run history as a JSON backup. Original media files are not included.</p><div class="toolbar top-gap"><button class="button button-primary" data-action="export">Export backup</button><button class="button button-secondary" data-action="import-pick">Import backup</button><input id="backupInput" class="visually-hidden" type="file" accept="application/json,.json"></div><div id="backupStatus" class="tool-note">Back up before clearing browser data or moving devices.</div></article>
+        <article class="panel"><span class="panel-kicker">APP INSTALLATION</span><h3>Install on Android</h3><p>When served from HTTPS or localhost in a compatible browser, this package can be installed to the home screen as a PWA.</p><button class="button button-secondary top-gap" data-action="install">Install / add to home screen</button><div id="pwaStatus" class="tool-note">Checking PWA support…</div></article>
+        <article class="panel"><span class="panel-kicker">STORAGE HEALTH</span><h3>Local data footprint</h3><div id="storageReport" class="storage-report"></div><button class="button button-secondary top-gap" data-action="refresh-storage">Refresh storage status</button></article>
+        <article class="panel danger-panel"><span class="panel-kicker">DESTRUCTIVE ACTION</span><h3>Reset workspace</h3><p>Deletes local Forge workspace data and the file metadata index. It does not delete original device files. Export a backup first.</p><button class="button button-danger top-gap" data-action="reset">Reset local workspace</button></article>
+      </div>
+      <div class="footer-note">Automation Forge v3.2 · All processing stays on-device unless you explicitly use a webhook · Built for Android mobile</div>
+    </section>
+  </main>
+
+  <nav class="bottom-dock" aria-label="Quick navigation"><button class="dock-button active" data-view="home"><span>⌂</span>Home</button><button class="dock-button" data-view="tasks"><span>☑</span>Tasks</button><button class="dock-button" data-view="engine"><span>⚡</span>Engine</button><button class="dock-button" data-view="toolbox"><span>▦</span>Tools</button><button class="dock-button" data-view="connections"><span>⌁</span>Connect</button></nav>
+</div>
+
+<dialog id="forgeDialog" class="forge-dialog"><form method="dialog" id="forgeForm"><div class="dialog-head"><div><div class="eyebrow" id="dialogEyebrow">NEW ITEM</div><h2 id="dialogTitle">Create</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div><div id="dialogBody" class="dialog-body"></div><div class="dialog-actions"><button class="button button-secondary" value="cancel">Cancel</button><button class="button button-primary" id="dialogSave" type="button">Save</button></div></form></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="native-bridge.js" defer></script>\n<script src="app.js" defer></script>
+</body>
+</html>

@@ -41,7 +41,7 @@ PATTERNS = [
 ]
 DRIVE_ID = re.compile(r"(?<![\w-])1[A-Za-z0-9_-]{24,43}(?![\w-])")
 DRIVE_CONTEXT = re.compile(r"drive|folder|gdoc|google ?doc|docs\.google", re.I)
-EMAIL_OK = re.compile(r"@(?:example\.(?:com|org|net)|[\w.-]+\.invalid|anthropic\.com)$|^(?:noreply|no-reply|git|user|you|name)@", re.I)
+EMAIL_OK = re.compile(r"@(?:(?:[\w-]+\.)*example\.(?:com|org|net)|[\w.-]+\.invalid|anthropic\.com)$|^(?:noreply|no-reply|git|user|you|name)@", re.I)
 
 
 def read_bytes(path):

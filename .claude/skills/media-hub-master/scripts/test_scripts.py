@@ -31,6 +31,10 @@ class Privacy(unittest.TestCase):
             self.assertIn("== %s (1)" % cat, out, cat)
         self.assertNotIn("example.com", out); self.assertNotIn("PLACEHOLDER", out)
 
+    def test_reserved_example_domains_are_not_emails(self):
+        d = Path(tempfile.mkdtemp()); (d / "t.kt").write_text('url("https://user:pass@hooks.example.com/x") and ops@mail.example.org\n')
+        self.assertEqual(quiet(privacy_scan.main, str(d))[0], 0)
+
     def test_bare_drive_ids(self):
         d = Path(tempfile.mkdtemp())
         (d / "plan.md").write_text("**Drive folders:** primary 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA, backup 1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo\n"

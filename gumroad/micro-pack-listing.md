@@ -24,3 +24,5 @@ It's the free slice of the $49 AI Governance Bundle, priced at five dollars so i
 **Upgrade:** AI Governance Bundle at $49 adds tiered memory, four-surface integrity, Dead Man's Switch, and the full alert protocol.
 
 Link: github.com/xXGxGXx/boq-income-pipeline/blob/main/skills/tiered-memory-system/entry-sku/FREE-TEASER.md
+
+MIT licensed — github.com/xXGxGXx/boq-income-pipeline/blob/main/LICENSE

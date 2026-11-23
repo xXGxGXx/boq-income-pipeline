@@ -11,7 +11,8 @@
 Flags, by category
   media      photos, video, audio files (personal media rarely belongs in a repository, never in a public one)
   catalog    personal catalogs: catalog.json, media_plan.json, media-manifest.json, playable-report.json, *.tsv libraries
-  cloud      Google Drive/Docs/Photos, Dropbox, OneDrive, iCloud, MEGA links to files or folders
+  cloud      Google Drive/Docs/Photos, Dropbox, OneDrive, iCloud, MEGA links to files or folders, and bare Drive file or
+             folder IDs on a line that mentions Drive, a folder or a doc (an ID alone opens anything shared by link)
   device     paths on a phone or computer: /storage/emulated/0, content://, /sdcard, Termux homes, C:\\Users\\name, /Users/name
   email      email addresses (example.com / example.org / noreply addresses are ignored)
   secret     API keys and tokens (Anthropic, OpenAI, xAI, GitHub, AWS, Google, Slack), private keys, bearer tokens
@@ -38,6 +39,8 @@ PATTERNS = [
                           r"AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[abpr]-[A-Za-z0-9-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
                           r"[Bb]earer\s+[A-Za-z0-9._~+/-]{30,}=*")),
 ]
+DRIVE_ID = re.compile(r"(?<![\w-])1[A-Za-z0-9_-]{24,43}(?![\w-])")
+DRIVE_CONTEXT = re.compile(r"drive|folder|gdoc|google ?doc|docs\.google", re.I)
 EMAIL_OK = re.compile(r"@(?:example\.(?:com|org|net)|[\w.-]+\.invalid|anthropic\.com)$|^(?:noreply|no-reply|git|user|you|name)@", re.I)
 
 
@@ -128,6 +131,11 @@ def scan(files, terms=(), max_mb=5.0, allow=()):
                     if cat == "email" and EMAIL_OK.search(m.group(0)):
                         continue
                     findings.append((cat, name, ln, mask(m.group(0))))
+            if DRIVE_CONTEXT.search(line):
+                for m in DRIVE_ID.finditer(line):
+                    tok = m.group(0)
+                    if re.search(r"[a-z]", tok) and re.search(r"[A-Z]", tok) and not any(tok in f[3] for f in findings[-5:]):
+                        findings.append(("cloud", name, ln, "Drive ID " + mask(tok)))
             for t, rx in term_res:
                 if rx.search(line):
                     findings.append(("term", name, ln, "matches one of your private terms (%s)" % mask(t)))

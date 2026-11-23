@@ -10,6 +10,7 @@ End of every conversation turn where something durable comes up. Durable means a
 - Standing instructions or preference changes
 - New integrations, API keys referenced by name only (never values), endpoints
 - Errors and their resolutions
+- Large artifacts: scripts, code files, prompts, configs, or any file body the user asked to build or that was produced during the turn
 
 **Tier 2 — checkpoint if non-obvious:**
 - Insights or conclusions that would be expensive to re-derive
@@ -31,12 +32,22 @@ End of every conversation turn where something durable comes up. Durable means a
      - Changed: <what changed, one line>
      - Refs: <file paths / commands / SHAs touched>
      - Standing: <any standing instruction added or modified, or "none">
+     - Artifacts: <Drive file names uploaded this turn, or "none">
      ```
    - Tool resolution: do not hard-code tool names. Search connected tools for the action "create or update file in Google Drive" and invoke whatever tool matches. If the primary search returns nothing, try "upload file to Drive" or "write Drive document".
 3. Verify the write: the tool response must return a file ID. If it does not, treat as failure and go to step 5.
 4. Sync the same fact to the local memory file via edit_memory — one fact per bullet, dated. This step is mandatory, not optional.
 5. On Drive failure: retry once against the alternate folder ID using the same action-based lookup. If both fail, push the checkpoint as a commit to this repo at `skills/drive-checkpoint/fallbacks/checkpoint-YYYY-MM-DD.md` by searching for the "create or update file in GitHub" action. Report the fallback aloud with the commit reference.
 6. Confirm aloud: file name landed, plus whether it was primary, backup, or GitHub fallback. Never assume silently.
+
+## Artifact upload (large file bodies)
+When a turn produces or modifies a substantial artifact — a script, code file, prompt, config, or document the user asked to build — upload the full file body to Drive in addition to the short checkpoint entry:
+- Folder: same "Ara Memory Backups" folders (primary first, backup second).
+- File naming: `<descriptive-name>-YYYY-MM-DD.md` (e.g. `auto-continue-loop-2026-11-23.py` stored as `.md` with a language fence, or the original extension if the Drive tool supports it).
+- Content: the complete file body exactly as produced. Do not truncate.
+- If the file exceeds the Drive upload tool's size limit, split into numbered parts (`-part1`, `-part2`) and note the split in the checkpoint entry.
+- Verify each upload returns a file ID before confirming aloud.
+- This exists specifically because sandbox disks reset between turns — Drive is the durable copy of anything built.
 
 ## Session start
 On the first turn of a new session, check whether today's checkpoint file exists in the primary folder (search Drive for `checkpoint-YYYY-MM-DD`). If missing and durable content is expected, create it. If present, no action needed beyond normal turn-end behavior.
@@ -48,13 +59,16 @@ On the first turn of a new session, check whether today's checkpoint file exists
 - "Automation" from the user means autonomous real-time execution during the conversation, never scheduled reminders.
 - If edit_memory fails, retry once. If it still fails, note it in the Drive entry and report aloud.
 - Tool names are resolved at runtime via action search, never assumed from memory. This makes the skill survive connector renames and additions.
+- Artifact uploads are mandatory for any file body produced or modified during the turn — not optional.
 
 ## Definition of done
 A checkpoint turn is complete only when all of these are true:
 - [ ] Drive file write returned a file ID (primary or backup)
 - [ ] Memory file synced for the same fact
-- [ ] Confirmation spoken aloud with the file name
+- [ ] Any artifact file bodies uploaded to Drive with file IDs returned
+- [ ] Confirmation spoken aloud with the file name(s)
 - [ ] No credentials or sensitive data in the written content
 
 ## Recovery
 If memory is lost or corrupted: read the newest `checkpoint-*.md` from the primary Drive folder (action search: "read file from Google Drive"), reconstruct facts in reverse-chronological order, re-sync to the memory file, and commit a recovery note to this repo at `skills/drive-checkpoint/recovery-YYYY-MM-DD.md`.
+If an artifact is lost from the sandbox: search Drive for its filename pattern (action search: "search files in Google Drive") and restore from the newest matching upload.

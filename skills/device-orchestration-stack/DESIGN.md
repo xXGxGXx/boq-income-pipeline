@@ -1,5 +1,5 @@
 # Device Orchestration Stack — Design Doc
-**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture + semantic memory + auto-fail-resolution)
+**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture + semantic memory + auto-fail-resolution + AI-side watchdog)
 
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
@@ -269,8 +269,9 @@ Built from research into self-healing agent patterns (AI Advances, Copyl, CXAS S
 13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging, global allowlist synced via Drive spine
 14. Screen grid input overlay — 10×20 chess-notation grid, auto cell-size from resolution, UI-tree-first targeting ladder with grid/OCR/HID fallbacks, zoom-crop precision, tap verification, keypress replication (letters/space/back/enter), ephemeral overlay
 15. **Single-grant architecture** — one Shizuku/ADB authorization covers all layers and modules; no per-feature permission prompts; every layer declares its subset; anything needing a separate grant gets reworked or dropped; future additions inherit automatically; the single grant IS the security boundary alongside Module F's allowlist and Module E's sandbox
-16. **Semantic memory layer** — vector embeddings alongside flat-text checkpoints; hybrid search (vector + keyword + metadata); selective write with ADD/UPDATE/INVALIDATE/NOOP; cosine dedup on write path (threshold 0.95, zero-LLM lexical default); four timestamps per fact; decay + consolidation background jobs; raw episodes preserved; local embedder in proot (single-grant compliant)
+16. **Semantic memory layer** — vector embeddings alongside flat-text checkpoints; hybrid search (vector + keyword + metadata); selective write ADD/UPDATE/INVALIDATE/NOOP; cosine dedup on write path (threshold 0.95, zero-LLM lexical default); four timestamps per fact; decay + consolidation background jobs; raw episodes preserved; local embedder in proot (single-grant compliant)
 17. **Auto-fail-resolution engine** — five-stage self-healing cycle (detect → diagnose → repair → validate → adapt); error classification routing (transient/permanent/logic/semantic); retry with exponential backoff + jitter; circuit breakers per layer; fallback chains with graceful degradation; automatic alternative-method search on non-resolution; evidence-backed human escalation only for high-risk irreversible actions; integrates with dead-man's switch, Module E, Module H, cost ceiling, and auto-continue gate
+18. **AI-side dead-man's switch** — lightweight watchdog pings the model on a short interval; if the API hangs or the model starts looping silently, auto-restarts the session or falls back to a cached response; closes the gap where a non-responsive model looks like normal idle time; integrates with Module I's detection stage and Module B's capability registry
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -313,3 +314,4 @@ Built from research into self-healing agent patterns (AI Advances, Copyl, CXAS S
 - Fallback chains compose with retry and breaker — three layers, not three separate systems
 - Adaptation deposits resolved patterns into Module H — the engine gets faster over time
 - Auto-method-switching honors the standing rule: walls trigger wider scans, never narrower focus
+- AI-side watchdog ping interval is short enough to catch hangs before the user notices, long enough to avoid false positives from slow-but-valid responses

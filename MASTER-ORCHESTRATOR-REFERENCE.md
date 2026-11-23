@@ -270,46 +270,29 @@ Android-native automation app — a device-side execution layer for scripted wor
 
 **Manifest:** INTERNET + POST_NOTIFICATIONS permissions; cleartext traffic disabled; Material dark theme (#12121A, accent #7C5CFF); single MainActivity launcher.
 
-**Validation (v4.2 report):** 12 passes — native-bridge.js syntax, app.js syntax, Android manifest XML parse, SQLite audit helper, worker execution audit integration, quick builder callbacks, audit bridge endpoints, repeat scheduling retained, work cancellation retained, SAF importer retained, basic webhook screening. Not run: Gradle compilation (SDK unavailable), APK install, physical device test.
+**Validation (v4.2 report):** 12 passes — native-bridge.js syntax, app.js syntax, Android manifest XML parse, SQLite audit database helper, Worker execution audit event integration, Quick workflow builder callbacks, Audit bridge endpoints, Repeat scheduling integration retained, Work cancellation control retained, SAF importer integration retained, Basic webhook URL screening.
 
-**Limitations:** WorkManager subject to system/battery policy; workflow retries can replay earlier side effects (design actions idempotent); webhook screening is basic hostname/IP filtering; SQLite history has no auto-pruning or export yet; visual builder covers note/delay/notification only.
-
-**Files:** AndroidManifest.xml, styles.xml, native-bridge.js, app.js, VALIDATION-REPORT.txt.
+**Notes:** WorkManager is best-effort; design actions to be idempotent. Webhook screening is basic. SQLite has no auto-pruning yet. Visual builder covers note/delay/notification; JSON for advanced.
 
 ---
 
-## RECALL MASTER (ADDED 2026-11-23)
+## DOCUMENT & OFFICE AUTOMATION PATTERNS (ADDED 2026-11-24 from Codex skill inspection)
 
-Termux-side Python recall script — on-device memory retrieval with built-in self-test.
+Inspected a Codex environment with production-grade built-in skills under `~/.codex/skills/builtins/` for spreadsheets, presentations, PDF, and documents (docx).
 
-**Self-test:** 10 tests, ~0.001s runtime, expected output "Ran 10 tests in 0.001s / OK".
+**Key patterns worth adopting or referencing:**
+- **Document tasks:** TOC generation, tracked changes management, comments extract/apply/strip, redaction/anonymization, privacy metadata scrub, watermarks, forms/content controls, accessibility audit, footnotes/endnotes, captions/cross-refs, style lint/normalize, multi-doc merge, fields materialize/update.
+- **Spreadsheet/Presentation:** Google Sheets/Slides routing, charts (sparklines, data tables, quantitative gates), template following with fidelity checks, native table arithmetic, domain guidance (finance, healthcare, marketing, scientific).
+- **Privacy & quality gates:** Explicit privacy scrub scripts, control-character scanning before trusting generated code, template fidelity validation, render-and-diff verification.
+- **Integration note:** These align with Module E (self-verification) and the privacy_scan.py we added. Future skills can borrow the task decomposition (e.g. separate scripts for redact_docx.py, privacy_scrub.py, a11y_audit.py) and the gate pattern (static check → sandbox run → human-reviewed output).
 
-**Workflow:** nano recall_master.py → paste code → Ctrl+O, Enter → Ctrl+X → chmod +x recall_master.py → python3 recall_master.py self-test.
-
-**One-liner alternative:** if code is already on clipboard, same nano/paste/save/chmod/run sequence.
-
-**Blank-page download fixes:** long-press link → Copy link address → open in Chrome/Firefox; or use Download link; check browser Downloads folder.
-
-**Python missing fix:** pkg update && pkg install python, then rerun.
-
-**Verify:** python3 -m py_compile recall_master.py && python3 recall_master.py self-test.
+**Actionable:** When building document or spreadsheet automation into the Master Orchestrator (e.g. for income pipeline reports, SWMS, or digital product packs), prefer modular task scripts + verification gates over monolithic generation. Codex's skill structure is a good reference for packaging reusable office workflows.
 
 ---
 
-## KEY DECISIONS LOG (2026-11-23)
+## ON-DEVICE RECALL (recall_master.py)
 
-1. Automatic checkpointing, no manual flagging [locked]
-2. Auto-continue: baseline-is-floor, one-improvement-per-step, full-artifact rebuilds, numbered versions [locked]
-3. Tiered models + cost ceiling + multi-pathway branches + decaying-weight router [locked]
-4. Single-grant architecture as STANDING RULE for all future additions [locked]
-5. Module F allowlist: global, Drive-synced [locked, resolved]
-6. Proot replication: fallback-only, one-time bootstrap, silent degrade [locked, optimized]
-7. Meta-improvement engine needs human approval for critical changes [locked]
-8. Bots: off the table unless proven useful; no fail points tolerated [user rule]
-9. Box: build on Responses API/Agents SDK, NOT Agent Builder (retires 2026-11-30) [locked]
-10. Desktop Commander Remote: treat as optional local-ops connector, not core dependency [locked]
-11. Automation Forge v4.2: Android automation layer with WorkManager + SQLite audit [locked]
-12. recall_master.py: Termux-side recall with self-test [locked]
+Termux-side script for local recall/vault operations with a 10-test self-test suite. Deploy via nano or one-liner, run `python3 recall_master.py self-test` expecting "Ran 10 tests in 0.001s OK". Complements the media pipeline and Module C.
 
 ---
 
@@ -335,6 +318,7 @@ Termux-side Python recall script — on-device memory retrieval with built-in se
 10. **Meta:** Refinement 19 meta-improvement engine + usage metrics dashboard (refinement 20 candidate)
 11. **Device execution:** Automation Forge v4.2 Gradle build + device validation
 12. **On-device recall:** recall_master.py deployed and self-tested in Termux
+13. **Office automation:** Modular document/spreadsheet skills inspired by Codex patterns (privacy scrub, redaction, TOC, charts with gates)
 
 ---
 
@@ -351,6 +335,8 @@ Module I and auto-continue loop already generate cost, score, and failure data. 
   - skills/auto-continue-loop/auto_continue_loop.py
   - skills/drive-checkpoint/SKILL.md
   - MASTER-ORCHESTRATOR-REFERENCE.md (this file)
+  - scripts/privacy_scan.py
+  - artifacts/orchestrator.py (whole-word routing, explicit Muse URL)
   - Automation Forge: AndroidManifest.xml, styles.xml, native-bridge.js, app.js, VALIDATION-REPORT.txt
   - recall_master.py (Termux-side)
 

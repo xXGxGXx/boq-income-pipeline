@@ -1,5 +1,5 @@
 # Device Orchestration Stack — Design Doc
-**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture)
+**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture + semantic memory + auto-fail-resolution)
 
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
@@ -7,10 +7,10 @@ A voice-first, minimal-fail-point orchestration layer combining the best non-con
 ## Single-Grant Architecture (LOCKED 2026-11-23 — STANDING RULE)
 **Principle:** Treat the entire stack as ONE application with ONE permission grant surface. Minimize access restrictions, maximize use potential, zero per-feature permission prompts.
 
-- **One grant covers everything:** A single Shizuku authorization (preferred) or ADB authorization covers Layers 1–7 and Modules A–G. No layer may request its own separate runtime permission.
-- **No repeated prompts:** The user grants once at setup. After that, every feature — shell, screen input, voice routing, chat injection, grid taps, code execution, media indexing, cross-device sync — runs under that same grant without re-asking.
-- **Each layer declares its subset:** Every layer and module must document exactly which subset of the single grant it consumes (e.g., Layer 4 uses accessibility + screenshot; Module F uses ACTION_SET_TEXT + IME key events). This is documentation, not a permission request.
-- **Rework or drop anything needing a separate grant:** If a proposed addition would require a new runtime permission (overlay, device admin, SMS, contacts, etc.), it must be reworked to operate within the existing single grant or dropped entirely.
+- **One grant covers everything:** A single Shizuku authorization (preferred) or ADB authorization covers Layers 1–7 and Modules A–I. No layer may request its own separate runtime permission.
+- **No repeated prompts:** The user grants once at setup. After that, every feature runs under that same grant without re-asking.
+- **Each layer declares its subset:** Every layer and module must document exactly which subset of the single grant it consumes. This is documentation, not a permission request.
+- **Rework or drop anything needing a separate grant:** If a proposed addition would require a new runtime permission, it must be reworked to operate within the existing single grant or dropped entirely.
 - **Future additions inherit this rule automatically:** Any new layer, module, or refinement added to this design must comply with single-grant architecture by default. No exceptions without explicit user override.
 - **Security model:** The single grant IS the security boundary. Instead of per-feature allowlists and permission checks, the boundary is: (1) the user's one-time grant, (2) Module F's chat-surface allowlist for destructive injections, (3) Module E's sandbox for code execution. Everything else runs open under the grant.
 - **Rationale:** Permission fatigue kills adoption. One grant means the stack feels like one app, not seven tools fighting for access. Minimal friction, maximal capability.
@@ -192,6 +192,67 @@ Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix)
 - Not pixel-perfect targeting by default — coarse cells first, zoom-refine on demand
 - Not a general gesture engine — taps, long-presses, and basic swipes only at this stage
 
+### Module H — Semantic Memory Layer (2026-11-23 addition)
+Built from research into Parallel's four-tier agent memory hierarchy, Mem0, XERJ's model-free dedup, SynapCores vector dedup, and the Agent Memory Field Guide's reference architecture. Upgrades the flat-text checkpoint store into meaning-addressable memory.
+
+**Core design:**
+- Every durable fact gets embedded (vector) alongside its text and metadata (updated_at, source_session_id, scope: user/workspace/project)
+- **Targeted retrieval:** future sessions query by meaning — "what did we decide about Termux fallbacks" surfaces the right entry even without exact keywords. Hybrid search: vector + keyword + metadata filters, then rerank and pack within a token budget.
+- **Selective write:** only durable facts, decisions, corrections persist — not transient chatter. Extraction step resolves ADD / UPDATE / INVALIDATE / NOOP per fact.
+- **Semantic dedup on the write path:** cosine similarity check against existing memories in the same namespace/scope; default threshold 0.95 (XERJ pattern). Hits return the existing id and skip the write — no second copy. Runs with zero LLM calls using lexical feature hashing by default; optional neural embedder backend for meaning-level matching.
+- **Four timestamps per fact:** valid_at, invalid_at, created_at, expired_at. Relative dates resolved at write time.
+- **Decay:** periodic background job expires/archives stale entries; recency_weight biases retrieval toward recent facts.
+- **Consolidation:** background job merges duplicate episodes into canonical facts and supersedes stale ones — keeps the store lean as it grows.
+- **Raw episodes preserved:** verbatim retrieval beats extraction by 16–22 points in controlled ablations (Agent Memory Field Guide), so the append-only log stays intact alongside extracted facts.
+
+**Integration with existing layers:**
+- Uses Module D (sync spine) so the vector index replicates across Drive primary + backup and GitHub canonical
+- Uses Module A (replay buffer) as the episodic source that consolidation reads from
+- Uses Module B (capability registry) to check embedder/index availability before semantic queries
+- Feeds the auto-continue loop: retrieved relevant memories inject into each step's context as grounding
+- Single-grant compliant: local embedder (sentence-transformers or similar) runs in proot/Termux — no cloud API, no new permission surface
+
+**Non-goals:**
+- Not a replacement for the flat checkpoint files — those remain the human-readable, independently verifiable backup
+- Not a general knowledge base / RAG over the web — scoped to the user's own durable facts and project state
+
+### Module I — Auto-Fail-Resolution Engine (2026-11-23 addition)
+Built from research into self-healing agent patterns (AI Advances, Copyl, CXAS SCRAPI, NathanMaine/self-healing-agentic-workflows) and production fault-tolerance: retry, circuit breaker, fallback chains. Goal: zero paused or stalled moments — nothing waits on something that will never happen; if one path fails, another is tried automatically.
+
+**Core loop (five-stage self-healing cycle):**
+1. **Detection** — every tool call, layer heartbeat, and module action is wrapped; failures are caught as structured events, never raw crashes
+2. **Diagnosis** — errors classified before any retry: transient/retriable (429, 503, network jitter, read timeout) vs permanent/non-retriable (401, 400, auth failure, context overflow) vs logic defects (ValueError, TypeError, schema mismatch) vs semantic/quality failures (wrong answer, task drift, hallucination). Classification routes the recovery path — retrying a 401 burns quota with zero chance of success.
+3. **Repair** — transient: retry with exponential backoff + jitter (proven to lift success from ~55% to 96% at 35% per-call failure rate). Permanent: do not retry; correct input or escalate with evidence. Logic: feed to Module E's interpreter loop. Semantic: verifier detects + reflection re-generates.
+4. **Validation** — every repair is verified before the system proceeds: tap verification (Module G), code verification (Module E), response scoring (auto-continue gate). A repair that doesn't validate counts as another failure.
+5. **Adaptation** — resolved failures deposit experience back into detection rules (Module H semantic memory logs the failure pattern + fix so future sessions recognize it faster).
+
+**Circuit breaker:** sustained outages trip a breaker per layer/backend — stops hammering a dead system, opens a fallback path instead of piling up retries.
+
+**Fallback chains (compose with retry + breaker):**
+- Primary path (e.g., Termux) → 3 retries exhausted → secondary path (proot) → different backend/supplier to avoid同源故障 → semantic cache of prior similar resolutions → deterministic rule/preset fallback that guarantees *some* response
+- The chain accepts graceful degradation in exchange for forward progress — never a hard stop
+
+**Auto-method-switching (user's "try other methods" requirement):**
+- On any non-resolution, the engine automatically searches for and tests alternative methods (web search, alternate tools, alternate backends) without asking or pausing — consistent with the user's standing autonomous-execution rule
+- A wall is never a stop signal; it triggers wider scanning
+
+**Escalation (last resort only):**
+- After retries, fallbacks, and alternative methods are exhausted for a *high-risk irreversible* action, escalate to human with full evidence: what failed, what was tried, what remains
+- Low-risk actions never escalate — they degrade silently and log
+
+**Integration with existing layers:**
+- Uses Module B (capability registry) as the detection substrate — stale heartbeats are failures the engine sees before any command is issued
+- Uses Module A's replay buffer to log every detect→diagnose→repair→validate→adapt cycle
+- Uses Module E for logic-defect repair (generate-fix-verify)
+- Uses Module H to store resolved failure patterns for faster future detection
+- Uses the dead-man's switch (refinement 3) as the primary detection trigger for Layer 1 backend death
+- Uses the cost ceiling: repair attempts count against the run budget
+- Uses the auto-continue score gate: a step whose repair fails validation cannot count as an improvement
+
+**Non-goals:**
+- Not a replacement for explicit error handling inside generated code — Module E still owns that
+- Not unsupervised autonomy over irreversible high-risk actions — those still surface to the human with evidence
+
 ## Locked Refinements
 1. Shizuku screenshot path over AutoX
 2. Swappable voice router plugins
@@ -208,6 +269,8 @@ Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix)
 13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging, global allowlist synced via Drive spine
 14. Screen grid input overlay — 10×20 chess-notation grid, auto cell-size from resolution, UI-tree-first targeting ladder with grid/OCR/HID fallbacks, zoom-crop precision, tap verification, keypress replication (letters/space/back/enter), ephemeral overlay
 15. **Single-grant architecture** — one Shizuku/ADB authorization covers all layers and modules; no per-feature permission prompts; every layer declares its subset; anything needing a separate grant gets reworked or dropped; future additions inherit automatically; the single grant IS the security boundary alongside Module F's allowlist and Module E's sandbox
+16. **Semantic memory layer** — vector embeddings alongside flat-text checkpoints; hybrid search (vector + keyword + metadata); selective write with ADD/UPDATE/INVALIDATE/NOOP; cosine dedup on write path (threshold 0.95, zero-LLM lexical default); four timestamps per fact; decay + consolidation background jobs; raw episodes preserved; local embedder in proot (single-grant compliant)
+17. **Auto-fail-resolution engine** — five-stage self-healing cycle (detect → diagnose → repair → validate → adapt); error classification routing (transient/permanent/logic/semantic); retry with exponential backoff + jitter; circuit breakers per layer; fallback chains with graceful degradation; automatic alternative-method search on non-resolution; evidence-backed human escalation only for high-risk irreversible actions; integrates with dead-man's switch, Module E, Module H, cost ceiling, and auto-continue gate
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -241,30 +304,12 @@ Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix)
 - OCR and HID fallbacks cover the two hardest surfaces: canvas text and input-blocking apps
 - Keypress-by-name (droid-agent/amctl) replicates physical keyboard input without coordinate guessing
 - **Single-grant means zero permission-prompt latency after setup** — the stack never blocks the user for access
-- **One grant = one app identity** — the OS, the user, and every AI client see one coherent system, not seven competing tools
-- **Security through grant scope, not feature gates** — the boundary is where the grant ends, not where individual modules add checks
-
-## Open Questions
-- ARGUS deeper inspection needed
-- Base44 MCP tool exposure specifics
-- Dead-man's switch trigger thresholds
-- Whether droid-agent and termux-mcp conflict on adb sessions
-- Proot vs Termux performance delta on media-heavy workloads
-- Whether Base44 Superagent can target proot backend directly
-- Replay buffer retention policy (size cap vs time cap)
-- Capability registry schema versioning across updates
-- Media hook indexing strategy for large libraries (incremental vs full scan)
-- Cross-device conflict edge cases (simultaneous edits on two devices)
-- Code interpreter: optimal sandbox isolation level (proot vs subprocess vs full VM)
-- Whether static analysis should use a dedicated linter binary or model-based check
-- Interpreter loop: should failed rounds trigger model escalation (cheap → premium)?
-- ~~Voice-to-chat: should the allowlist of approved chat surfaces be per-device or synced?~~ **RESOLVED: global, synced via Drive spine**
-- Whether termux-api accessibility merge (issue #828) will obsolete AccessDroid
-- Optimal timing between SET_TEXT and IME submit to avoid dropped key events
-- Whether to support multi-field forms (tab between fields) or single-field only
-- Grid: optimal default resolution (10×20 vs finer) for typical phone screens
-- Whether grid overlay should also render on the user's visible screen (debug mode) or model-only
-- Grid vs OCR precedence when both could resolve the same target
-- Whether scrcpy UHID path should be default or strictly opt-in for HID-level taps
-- Single-grant: whether Shizuku alone suffices for all layers or ADB fallback is needed for specific HID paths
-- Single-grant: how to handle future Android versions tightening Shizuku/ADB scope
+- Semantic dedup runs on the write path with zero LLM cost (lexical default)
+- Vector index lives locally in proot — no cloud embedding API, no new grant
+- Hybrid retrieval packs only top-k within a token budget — no context pollution
+- Raw episodes preserved alongside extracted facts — verbatim beats extraction by 16–22 points
+- Error classification prevents retrying permanent failures — saves quota and latency
+- Circuit breakers stop retry amplification during sustained outages
+- Fallback chains compose with retry and breaker — three layers, not three separate systems
+- Adaptation deposits resolved patterns into Module H — the engine gets faster over time
+- Auto-method-switching honors the standing rule: walls trigger wider scans, never narrower focus

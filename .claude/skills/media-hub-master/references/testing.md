@@ -25,6 +25,10 @@ Build the synthetic demo first (`tools/make_demo.py`, then `tools/build.py`). Ne
 - When the demo grows, update every hard-coded count at once.
 - A test that passes alone and fails in the full run is usually a race with background work (server probes, service-worker install): find the race before touching the app.
 
+## Generated code from other tools
+- Scan text files for control characters before trusting them: a `\f` in a non-raw Python string becomes a form feed (byte 0x0C), and `<script>\x0cunction toast(…)` silently broke every button on a page. One line finds them: `python3 -c "import re,sys;[print(p, m.start(), hex(m.group()[0])) for p in sys.argv[1:] for m in re.finditer(rb'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', open(p,'rb').read())]" FILES` (skip images and `__pycache__`).
+- `node --check` every inline script (extract it first), and parse manifests and JSON. "Static checks passed" in someone's report means nothing until you rerun them yourself on the files you actually have.
+
 ## Writing a fix
 1. Reproduce it in a small script first (it may not be a bug: a 5 s resume guard on a 6 s demo clip is the design working).
 2. Write the regression check so it fails before the fix (prove it, e.g. by running it against the old build).

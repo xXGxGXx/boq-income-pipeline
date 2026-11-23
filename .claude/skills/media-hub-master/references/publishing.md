@@ -10,6 +10,7 @@
    python3 scripts/privacy_scan.py --staged --terms ~/private-terms.txt
    ```
    A terms file (names, titles, private categories, one per line) stays outside the repository. Values are masked in the output, so the scan itself doesn't leak. Mark reviewed synthetic examples on their line with `privacy-scan: ok`.
+   Bare cloud IDs count too: a Drive folder or file ID alone opens it for anyone if it is shared by link. When IDs are already public, check the real sharing settings (the Drive connector's permissions call, read-only) before deciding how urgent it is.
 3. **Decide per finding:** remove it, move it to `private/` (git-ignored), replace it with a synthetic stand-in, or mark it reviewed.
 
 ## What a public repository may hold

@@ -31,6 +31,14 @@ class Privacy(unittest.TestCase):
             self.assertIn("== %s (1)" % cat, out, cat)
         self.assertNotIn("example.com", out); self.assertNotIn("PLACEHOLDER", out)
 
+    def test_bare_drive_ids(self):
+        d = Path(tempfile.mkdtemp())
+        (d / "plan.md").write_text("**Drive folders:** primary 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA, backup 1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo\n"
+                                   "sha256 1d26e8573e39089a126a25b26e62bf61116ab6e6931f9dacfacebea57dd79438 (a hash, not an id)\n"
+                                   "build 1AbCdEfGhIjKlMnOpQrStUvWxYz0 with nothing else on this line\n")
+        code, out = quiet(privacy_scan.main, str(d))
+        self.assertEqual(code, 1); self.assertIn("== cloud (2)", out); self.assertIn("plan.md:1", out); self.assertNotIn("plan.md:2", out)
+
     def test_clean_folder(self):
         d = Path(tempfile.mkdtemp()); (d / "readme.md").write_text("Nothing here but https://example.com/page\n")
         self.assertEqual(quiet(privacy_scan.main, str(d))[0], 0)

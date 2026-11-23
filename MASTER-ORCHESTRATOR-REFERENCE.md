@@ -268,9 +268,11 @@ Android-native automation app — a device-side execution layer for scripted wor
 
 **Capabilities:** WorkManager scheduling (best-effort, subject to Android battery policy), SQLite audit database logging every execution event, SAF file importer for picking local files, basic webhook URL screening (hostname/IP filtering — not a complete SSRF boundary), visual workflow builder (note, delay, notification steps; raw JSON available for advanced workflows), quick workflow builder callbacks, work cancellation control, repeat scheduling.
 
-**Manifest:** INTERNET + POST_NOTIFICATIONS permissions; cleartext traffic disabled; Material dark theme (#12121A, accent #7C5CFF); single MainActivity launcher.
+**Manifest:** INTERNET + POST_NOTIFICATIONS in the source manifest (the built app also requests WAKE_LOCK, ACCESS_NETWORK_STATE, RECEIVE_BOOT_COMPLETED and FOREGROUND_SERVICE, which WorkManager adds); cleartext traffic disabled; Material **Light** theme with dark status/navigation bars (#12121A), accent #7C5CFF; single MainActivity launcher.
 
-**Validation (v4.2 report):** 12 passes — native-bridge.js syntax, app.js syntax, Android manifest XML parse, SQLite audit database helper, Worker execution audit event integration, Quick workflow builder callbacks, Audit bridge endpoints, Repeat scheduling integration retained, Work cancellation control retained, SAF importer integration retained, Basic webhook URL screening.
+**Validation (v4.2 report):** 11 passes — native-bridge.js syntax, app.js syntax, Android manifest XML parse, SQLite audit database helper, Worker execution audit event integration, Quick workflow builder callbacks, Audit bridge endpoints, Repeat scheduling integration retained, Work cancellation control retained, SAF importer integration retained, Basic webhook URL screening. All 11 hold on inspection; Gradle was not run.
+
+**Build check (verified 2026-11-23, Claude Code):** v4.2 as sent did **not** build: Java/Kotlin JVM-target mismatch, then 3 Kotlin errors (`WorkInfo.inputData` does not exist; `openJsonPicker` missing `return`). **v4.2.1** in `automation-forge/` builds a debug APK and passes 7 JVM unit tests. It also fixes: endless retries on permanent errors (now fail at once; transient errors retry at most 5 times), replay of earlier steps after WorkManager's ~10-minute stop (now resumes at the unfinished step; delays capped at 8 minutes per workflow), and webhook screening gaps (redirects not followed; IPv6 literals, local names and hosts resolving to private addresses refused). Still to do: run it on a phone. Details: `automation-forge/CHANGES.md`.
 
 **Notes:** WorkManager is best-effort; design actions to be idempotent. Webhook screening is basic. SQLite has no auto-pruning yet. Visual builder covers note/delay/notification; JSON for advanced.
 
@@ -316,7 +318,7 @@ Termux-side script for local recall/vault operations with a 10-test self-test su
 8. **Cloud:** Base44 Superagent (Layer 6) + Box MCP (Layer 6.5)
 9. **Orchestration:** Hermes multi-agent (Layer 7) + Module C media hook + ARGUS pattern
 10. **Meta:** Refinement 19 meta-improvement engine + usage metrics dashboard (refinement 20 candidate)
-11. **Device execution:** Automation Forge v4.2 Gradle build + device validation
+11. **Device execution:** Automation Forge Gradle build ✅ (v4.2.1, `automation-forge/`, 7 unit tests) + device validation (pending)
 12. **On-device recall:** recall_master.py deployed and self-tested in Termux
 13. **Office automation:** Modular document/spreadsheet skills inspired by Codex patterns (privacy scrub, redaction, TOC, charts with gates)
 
@@ -337,8 +339,8 @@ Module I and auto-continue loop already generate cost, score, and failure data. 
   - MASTER-ORCHESTRATOR-REFERENCE.md (this file)
   - scripts/privacy_scan.py
   - artifacts/orchestrator.py (whole-word routing, explicit Muse URL)
-  - Automation Forge: AndroidManifest.xml, styles.xml, native-bridge.js, app.js, VALIDATION-REPORT.txt
-  - recall_master.py (Termux-side)
+  - automation-forge/ (Automation Forge v4.2.1 source: Gradle project, CHANGES.md with build results)
+  - recall_master.py (Termux-side): **not in the repository yet**; its 10-test self-test claim is unverified until it is added
 
 - **Drive primary:** 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA
 - **Drive backup:** 1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo

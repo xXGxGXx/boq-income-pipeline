@@ -1,8 +1,19 @@
 # Device Orchestration Stack — Design Doc
-**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input)
+**Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture)
 
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
+
+## Single-Grant Architecture (LOCKED 2026-11-23 — STANDING RULE)
+**Principle:** Treat the entire stack as ONE application with ONE permission grant surface. Minimize access restrictions, maximize use potential, zero per-feature permission prompts.
+
+- **One grant covers everything:** A single Shizuku authorization (preferred) or ADB authorization covers Layers 1–7 and Modules A–G. No layer may request its own separate runtime permission.
+- **No repeated prompts:** The user grants once at setup. After that, every feature — shell, screen input, voice routing, chat injection, grid taps, code execution, media indexing, cross-device sync — runs under that same grant without re-asking.
+- **Each layer declares its subset:** Every layer and module must document exactly which subset of the single grant it consumes (e.g., Layer 4 uses accessibility + screenshot; Module F uses ACTION_SET_TEXT + IME key events). This is documentation, not a permission request.
+- **Rework or drop anything needing a separate grant:** If a proposed addition would require a new runtime permission (overlay, device admin, SMS, contacts, etc.), it must be reworked to operate within the existing single grant or dropped entirely.
+- **Future additions inherit this rule automatically:** Any new layer, module, or refinement added to this design must comply with single-grant architecture by default. No exceptions without explicit user override.
+- **Security model:** The single grant IS the security boundary. Instead of per-feature allowlists and permission checks, the boundary is: (1) the user's one-time grant, (2) Module F's chat-surface allowlist for destructive injections, (3) Module E's sandbox for code execution. Everything else runs open under the grant.
+- **Rationale:** Permission fatigue kills adoption. One grant means the stack feels like one app, not seven tools fighting for access. Minimal friction, maximal capability.
 
 ## Core Stack (non-conflicting layers)
 
@@ -196,6 +207,7 @@ Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix)
 12. Code interpreter with static pre-pass, sandboxed execution, traceback feedback, three-failure cap, objective/check/stop framework
 13. Voice-to-chat injection overlay — ACTION_SET_TEXT primary, clipboard fallback, IME key submit, foreground-app gating, spoken safety confirm, AccessDroid/amctl Termux bridge, replay-buffer audit logging, global allowlist synced via Drive spine
 14. Screen grid input overlay — 10×20 chess-notation grid, auto cell-size from resolution, UI-tree-first targeting ladder with grid/OCR/HID fallbacks, zoom-crop precision, tap verification, keypress replication (letters/space/back/enter), ephemeral overlay
+15. **Single-grant architecture** — one Shizuku/ADB authorization covers all layers and modules; no per-feature permission prompts; every layer declares its subset; anything needing a separate grant gets reworked or dropped; future additions inherit automatically; the single grant IS the security boundary alongside Module F's allowlist and Module E's sandbox
 
 ## Optimization Notes
 - Proot is fallback-only, never preferred
@@ -228,6 +240,9 @@ Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix)
 - Zoom-crop turns a coarse 200-cell grid into effectively arbitrary precision on demand
 - OCR and HID fallbacks cover the two hardest surfaces: canvas text and input-blocking apps
 - Keypress-by-name (droid-agent/amctl) replicates physical keyboard input without coordinate guessing
+- **Single-grant means zero permission-prompt latency after setup** — the stack never blocks the user for access
+- **One grant = one app identity** — the OS, the user, and every AI client see one coherent system, not seven competing tools
+- **Security through grant scope, not feature gates** — the boundary is where the grant ends, not where individual modules add checks
 
 ## Open Questions
 - ARGUS deeper inspection needed
@@ -251,3 +266,5 @@ Built from research into LightGUIAgent (ReScienceLab), asterdroid/droid (Zfinix)
 - Whether grid overlay should also render on the user's visible screen (debug mode) or model-only
 - Grid vs OCR precedence when both could resolve the same target
 - Whether scrcpy UHID path should be default or strictly opt-in for HID-level taps
+- Single-grant: whether Shizuku alone suffices for all layers or ADB fallback is needed for specific HID paths
+- Single-grant: how to handle future Android versions tightening Shizuku/ADB scope

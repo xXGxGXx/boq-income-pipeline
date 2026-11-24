@@ -96,5 +96,34 @@ class SplitArchives(unittest.TestCase):
         self.assertEqual(code, 1); self.assertIn("vault.zip.part002", msg)
 
 
+    def test_parts_manifest_must_cover_every_part(self):
+        sums = "".join("%s  vault.zip.part%03d\\n" % (H(p), n) for n, p in enumerate(self.parts[:-1]))
+        manifest = self.d / "incomplete.sha256"
+        manifest.write_text(sums)
+        code, msg = run("--join", self.glob, "--parts-manifest", str(manifest))
+        self.assertEqual(code, 2)
+        self.assertIn("must list every input part", msg)
+        self.assertIn("missing:", msg)
+
+    def test_parts_manifest_rejects_unexpected_entries(self):
+        sums = "".join("%s  vault.zip.part%03d\\n" % (H(p), n) for n, p in enumerate(self.parts))
+        sums += "%s  vault.zip.part999\\n" % H(b"extra")
+        manifest = self.d / "unexpected.sha256"
+        manifest.write_text(sums)
+        code, msg = run("--join", self.glob, "--parts-manifest", str(manifest))
+        self.assertEqual(code, 2)
+        self.assertIn("unexpected:", msg)
+
+    def test_split_archive_refuses_symlink_parts(self):
+        link = self.d / "vault.zip.part999"
+        try:
+            link.symlink_to(self.d / "vault.zip.part000")
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable on this platform")
+        code, msg = run("--join", self.glob)
+        self.assertEqual(code, 2)
+        self.assertIn("non-symlink", msg)
+
+
 if __name__ == "__main__":
     unittest.main()

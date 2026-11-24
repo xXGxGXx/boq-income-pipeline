@@ -59,4 +59,4 @@ Pack version 2.0.0, content checked 2026-11-24. Free updates for 2.x.
 
 ## Cover image brief (for Canva)
 
-Clean and professional. Navy or deep teal background, white type. Title: "NDIS SIL Compliance Starter Pack." Subline: "Module 5A workflow, prompts and Word templates." Price mark: "A$37." Small footer: "Not legal advice. Verify current NDIS Commission requirements." No official NDIS logo, no Commission branding, and no ticks or badges that imply certified or approved.
+Clean and professional. Navy or deep teal background, white type. Title: "NDIS SIL Compliance Starter Pack." Subline: "Module 5A workflow, prompts and Word templates." No price on the cover (Gumroad shows it, and launch codes change it). Small footer: "Not legal advice. Verify current NDIS Commission requirements." No official NDIS logo, no Commission branding, and no ticks or badges that imply certified or approved.

@@ -66,4 +66,4 @@ Python 3.8 or newer (tested on 3.11, 3.12 and 3.13). No third-party packages. `g
 
 ## Cover image brief (for Canva)
 
-Dark charcoal background. Left: five short monospace filenames stacked (`privacy_scan.py`, `check_repo.py`, `verify_checksums.py`, `audit_server.py`, `split_build.py`). Right, one line: "Stdlib only. No install." Below: "Privacy and Integrity Toolkit — A$19." Accent in a single muted green or amber. No stock photos, no lock icons, no shields.
+Dark charcoal background. Left: five short monospace filenames stacked (`privacy_scan.py`, `check_repo.py`, `verify_checksums.py`, `audit_server.py`, `split_build.py`). Right, one line: "Stdlib only. No install." Below: "Privacy and Integrity Toolkit" (no price on the cover). Accent in a single muted green or amber. No stock photos, no lock icons, no shields.

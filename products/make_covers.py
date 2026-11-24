@@ -11,7 +11,9 @@ Screenshots must come from the synthetic demo library only (tools/make_demo.py),
 import argparse, base64, os, sys
 from pathlib import Path
 
-PRICES = {"toolkit": "A$19", "ndis": "A$37", "bundle": "A$49", "micro": "A$5", "mediahub": "A$24"}
+# Product covers carry no price (Gumroad shows it, and launch codes would make a printed price wrong).
+# The governance covers keep their funnel line, so these two prices must match the listings.
+PRICES = {"bundle": "A$49", "micro": "A$5"}
 BASE_CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%}
@@ -42,8 +44,8 @@ def toolkit(thumb):
                 """<div class='files mono'>%s</div>
     <div><div class='big'>Stdlib only.<br>No install.</div>
     <div class='sub'>Find keys, bank details and private links before you publish. Catch broken and placeholder files.</div></div>
-    <div class='foot'><span>Privacy and Integrity Toolkit</span><span class='price'>%s</span></div>"""
-                % ("".join("<div class='f'><span>$</span> %s</div>" % f for f in files), PRICES["toolkit"]))
+    <div class='foot'><span>Privacy and Integrity Toolkit</span><span class='price'>Python 3.8+ · Linux · macOS · Windows · Termux</span></div>"""
+                % "".join("<div class='f'><span>$</span> %s</div>" % f for f in files))
 
 
 def ndis(thumb):
@@ -51,7 +53,7 @@ def ndis(thumb):
         return page("""body{background:linear-gradient(160deg,#0b2a4a,#0e4d5c);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:64px}
         .t{font-size:56px;font-weight:700;line-height:1.08}.s{font-size:26px;color:#cfe3ea;margin-top:20px;line-height:1.35}
         .p{position:absolute;right:56px;top:52px;font-size:30px;font-weight:700;color:#9be3e0}""",
-                    "<div class='p'>%s</div><div class='t'>NDIS SIL Compliance Starter Pack</div><div class='s'>Module 5A workflow, prompts and Word templates</div>" % PRICES["ndis"])
+                    "<div class='t'>NDIS SIL Compliance Starter Pack</div><div class='s'>Module 5A workflow, prompts and Word templates</div>")
     return page("""body{background:linear-gradient(150deg,#0b2a4a 0%,#0d3f5a 55%,#0e5560 100%);color:#fff;padding:84px 96px}
     .k{font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:#9be3e0;font-weight:600}
     .t{font-size:66px;font-weight:700;line-height:1.06;margin-top:22px;max-width:930px;letter-spacing:-.01em}
@@ -63,8 +65,7 @@ def ndis(thumb):
     <div class='t'>NDIS SIL Compliance Starter Pack</div>
     <div class='s'>Module 5A workflow, prompts and Word templates</div>
     <div class='list'><span>Supported decision-making</span><span>Safeguarding</span><span>Practice governance</span><span>Tenancy, housing &amp; support agreements</span></div>
-    <div class='p'>%s</div>
-    <div class='foot'>Not legal advice. Verify current NDIS Quality and Safeguards Commission requirements.</div>""" % PRICES["ndis"])
+    <div class='foot'>Not legal advice. Verify current NDIS Quality and Safeguards Commission requirements.</div>""")
 
 
 def bundle(thumb):

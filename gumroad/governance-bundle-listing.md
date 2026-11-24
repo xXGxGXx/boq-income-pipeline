@@ -64,7 +64,7 @@ Quarterly title and spec refreshes. Version history preserved in the repo for ro
 
 ### Links
 
-- Full spec: https://github.com/xXGxGXx/boq-income-pipeline/blob/main/skills/tiered-memory-system/v3.2.md
+- Free preview: the Micro-Pack teaser (the full v3.2 spec is part of the paid bundle; don't link it here)
 - Dead Man's Switch repo: https://github.com/xXGxGXx/dead-mans-switch
 - Landing page: https://dead-mans-switch-landing-kylebesk1-7661.vercel.app
 - Micro-Pack listing (A$5): gumroad/micro-pack-listing.md

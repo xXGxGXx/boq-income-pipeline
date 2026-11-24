@@ -10,7 +10,7 @@ Not done in that commit: Gradle unit tests, APK assembly, and a phone test.
 
 ## Build results for this hardened version (2026-11-24)
 - Built in a Linux container with Gradle 8.14.3, JDK 21, Android SDK platform 36 and build-tools 35.0.0: `testDebugUnitTest` ran **7 tests, 0 failures**, and `assembleDebug` made a debug APK of about 2.9 MB.
-- The same build runs on every push in `.github/workflows/checks.yml` (job "Automation Forge"). Each run keeps the debug APK and test reports as a downloadable artifact for 14 days.
+- The same build runs on every pull request and every push to main in `.github/workflows/checks.yml` (job "Automation Forge"). Each run keeps the debug APK and test reports as a downloadable artifact for 14 days.
 - A Gradle wrapper (`./gradlew`, Gradle 8.14.3) is now included, so Android Studio and CI use the same Gradle version.
 - Still not done: a test on a phone, and release signing.
 

@@ -1,9 +1,11 @@
-# Runs on every push and pull request, whichever assistant or person made it.
+# Runs on every pull request and every push to main, whichever assistant or person made it (once per commit:
+# a branch push that also has a pull request would otherwise run everything twice).
 # A red cross on a commit means one of these found a real problem; the job log says which file and why.
 name: checks
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -96,7 +98,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5        # also checks the wrapper files against Gradle's published checksums
       - name: Unit tests and a debug build
         working-directory: automation-forge
-        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+        # Maven Central sometimes answers "429 Too Many Requests"; wait and retry instead of failing the build.
+        run: ./gradlew --no-daemon -Dorg.gradle.internal.repository.max.retries=8 -Dorg.gradle.internal.repository.initial.backoff=2000 testDebugUnitTest assembleDebug
       - name: Keep the debug APK and test reports (download them from this run's Artifacts section)
         if: always()
         uses: actions/upload-artifact@v5

@@ -12,7 +12,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
    python3 scripts/privacy_scan.py --staged   # private material in what you're committing
    ```
 2. Run the tests for what you changed (see [Tests](#tests)) and report the exact numbers you saw.
-3. Every push runs the same checks on GitHub (`.github/workflows/checks.yml`). A red cross on a commit means something broke: open the failed job, fix the file it names, and push again. Don't leave it red.
+3. Every pull request and every push to `main` runs the same checks on GitHub (`.github/workflows/checks.yml`). A red cross on a commit means something broke: open the failed job, fix the file it names, and push again. Don't leave it red.
 4. Fetch `main` first. Someone else may have changed the file since you last read it.
 
 ## Writing files through an API, connector or app
@@ -43,7 +43,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 | `media-hub/` | Media Hub: a private, offline-first media library web app with a loopback-only server. `README.md` inside explains it. |
 | `orchestrator/` | The tested multi-model orchestrator (Claude Code CLI, xAI, Muse) |
 | `artifacts/orchestrator.py` | A second, older orchestrator (duplicates `orchestrator/`) |
-| `automation-forge/` | Automation Forge 4.2.1, an Android app in Kotlin, with webhook steps switched off. Debug builds only; not yet tested on a phone. Every push builds it, and the run keeps the APK as a download. |
+| `automation-forge/` | Automation Forge 4.2.1, an Android app in Kotlin, with webhook steps switched off. Debug builds only; not yet tested on a phone. Every check run builds it and keeps the APK as a download. |
 | `MASTER-ORCHESTRATOR-REFERENCE.md` | Design for the voice-first Android stack, about 29.5 KB. If you see a one-line file, it's broken: restore it from git history. |
 | `.claude/skills/media-hub-master/` | Skill with the full working rules, plus tested scripts (server audit, privacy scan, checksums, build splitter) |
 | `scripts/` | `check_repo.py` and `privacy_scan.py`, with their tests |

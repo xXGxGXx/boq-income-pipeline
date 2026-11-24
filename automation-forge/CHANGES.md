@@ -1,3 +1,19 @@
+# Notification permission (Android 13+), issue #6 P0
+
+- **First launch on Android 13 or later:** the app asks once for permission to send notifications. It never asks again by itself.
+- **Before every notify step:** `ForgeNotifications.show()` checks whether Android will actually show the notification. Notifications can be blocked three ways: the permission isn't granted, the app's notifications are off in settings, or the "Forge workflow alerts" category is off. When a notification is blocked, nothing is posted. Posting anyway would be dropped silently.
+- **The execution history says what happened.** It records `NOTIFIED` when a notification was shown, and `NOTIFY_BLOCKED` with the reason when it wasn't. A blocked notification doesn't fail or retry the workflow: retrying can't change a setting, and it would replay the earlier steps.
+- **The native panel shows a notification status line.** When notifications are off, it gives the reason and an **Allow notifications** button. The button shows Android's permission dialog while Android still allows that, and otherwise opens the app's notification settings. The line updates after the dialog closes and whenever you return to the app.
+- **Bridge:** two read-only or benign methods are added: `notificationStatus()` and `allowNotifications()`.
+- **Tests:** the decisions live in `NotificationGate`, which has no Android code, so they run in 6 new JVM unit tests (13 in total with the 7 in `ForgePolicyTest`).
+- **Not done:** a test on a real phone. Check these on an Android 13+ device:
+  - the first-launch prompt;
+  - the granted path: the notification shows and the history records `NOTIFIED`;
+  - the denied path: nothing shows, the history records `NOTIFY_BLOCKED`, and the panel says why;
+  - denying twice, then pressing the button: it opens settings;
+  - turning the category off in settings: the status updates when you return to the app.
+
+
 # Automation Forge 4.2.1 integration notes
 
 This branch copies the 4.2.1 source and then disables two things the 4.2.1 build still did:

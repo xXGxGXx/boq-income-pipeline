@@ -11,3 +11,4 @@ local.properties
 *.aab
 *.jks
 *.keystore
+release-out/

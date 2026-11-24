@@ -47,7 +47,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 | `MASTER-ORCHESTRATOR-REFERENCE.md` | Design for the voice-first Android stack, about 29.5 KB. If you see a one-line file, it's broken: restore it from git history. |
 | `.claude/skills/media-hub-master/` | Skill with the full working rules, plus tested scripts (server audit, privacy scan, checksums, build splitter) |
 | `scripts/` | `check_repo.py` and `privacy_scan.py`, with their tests |
-| `products/`, `gumroad/`, `skills/` | Product drafts and listings |
+| `products/`, `gumroad/`, `skills/` | Products and listings. `python3 products/build_releases.py --out release-out` builds the buyer zips (never commit them). |
 | `docs/` | Handoffs between sessions |
 
 ## Tests
@@ -55,6 +55,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 ```bash
 python3 scripts/test_check_repo.py                                   # repository checker
 python3 .claude/skills/media-hub-master/scripts/test_scripts.py      # privacy scan, checksums, server audit
+python3 products/test_build_releases.py                              # buyer zips (reproducible, privacy-gated)
 python3 -m unittest orchestrator/test_orchestrator.py                 # needs: pip install httpx
 python3 artifacts/test_orchestrator.py                               # needs: pip install requests
 bash media-hub/tests/run_all.sh                                      # needs Pillow and ffmpeg; browser suites need Playwright

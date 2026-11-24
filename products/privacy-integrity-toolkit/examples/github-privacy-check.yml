@@ -1,0 +1,26 @@
+# Privacy and Integrity Toolkit: GitHub Actions check.
+# Copy to .github/workflows/privacy-check.yml. Assumes the toolkit is committed at tools/privacy-toolkit/.
+name: privacy-check
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Broken, truncated or placeholder files
+        run: python3 tools/privacy-toolkit/check_repo.py
+      - name: Private material (fails only on findings not in .privacy-baseline)
+        run: |
+          if [ -f .privacy-baseline ]; then
+            python3 tools/privacy-toolkit/privacy_scan.py --tracked --baseline .privacy-baseline
+          else
+            python3 tools/privacy-toolkit/privacy_scan.py --tracked
+          fi

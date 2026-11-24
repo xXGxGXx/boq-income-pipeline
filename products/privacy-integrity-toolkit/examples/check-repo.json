@@ -1,0 +1,7 @@
+{
+  "min_bytes": {
+    "README.md": 300,
+    "LICENSE": 500,
+    "docs/handbook.md": 5000
+  }
+}

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""check_repo.py - catch the ways files in this repository have actually broken, before (or right after) they land.
+"""check_repo.py - catch the ways files in a git repository actually break, before (or right after) they land.
 
-    python3 scripts/check_repo.py                 # every file git tracks, as it is on disk now
-    python3 scripts/check_repo.py --rev origin/main    # a commit or branch, read straight from git (no checkout needed)
+    python3 check_repo.py                      # every file git tracks, as it is on disk now
+    python3 check_repo.py --rev origin/main    # a commit or branch, read straight from git (no checkout needed)
 
 Checks
   placeholder  a file whose content is an unexpanded shell command such as $(cat /tmp/file.md). This happens when a
                file is written through an API or connector: nothing runs the shell, so the command itself is saved.
                MASTER-ORCHESTRATOR-REFERENCE.md was replaced this way three times.
-  size         key documents shrinking far below their real size (deleted or truncated by mistake)
+  size         key documents missing or shrunk far below their real size (deleted or truncated by mistake). List them
+               in .check-repo.json at the repository root: {"min_bytes": {"README.md": 300, "docs/spec.md": 10000}}
   conflict     leftover merge-conflict markers (<<<<<<< / >>>>>>>)
   hidden       invisible characters: control bytes such as a form feed (one replaced the f of "function" and broke a
                whole page), bidirectional overrides that make code read differently from how it runs, stray BOMs
@@ -20,13 +21,7 @@ Exit code 0 = all good, 1 = problems listed, 2 = bad usage.
 """
 import argparse, json, os, re, shutil, subprocess, sys, tempfile
 
-# Real sizes on 2026-11-24 are well above these floors; a file below its floor was almost certainly cut or replaced.
-KEY_FILES = {
-    "MASTER-ORCHESTRATOR-REFERENCE.md": 10000,   # about 29.5 KB
-    "README.md": 300,
-    "LICENSE": 500,
-    "AGENTS.md": 500,
-}
+CONFIG_NAME = ".check-repo.json"   # optional; {"min_bytes": {path: smallest believable size}}
 BINARY_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".mp4", ".webm", ".mov", ".mp3", ".wav", ".zip", ".gz",
               ".jar", ".apk", ".pdf", ".xlsx", ".docx", ".woff", ".woff2", ".ttf", ".skill", ".bundle", ".pyc"}
 PROSE_EXT = {".md", ".txt", ".json", ".html", ".htm", ".yaml", ".yml", ".csv", ".tsv", ".xml", ""}
@@ -69,7 +64,20 @@ def syntax_check(cmd, data, suffix):
     return msg.replace(tmp.name, "file")[:200]
 
 
-def check(files):
+def load_key_files(files):
+    """Key documents and their size floors, from .check-repo.json in the checked tree (none when it is absent)."""
+    for name, read in files:
+        if name == CONFIG_NAME:
+            try:
+                floors = json.loads(read().decode("utf-8")).get("min_bytes", {})
+                return {str(k): int(v) for k, v in floors.items()}
+            except (ValueError, AttributeError, TypeError) as exc:
+                raise ValueError("%s is not valid: %s" % (CONFIG_NAME, exc))
+    return {}
+
+
+def check(files, key_files=None):
+    key_files = load_key_files(files) if key_files is None else key_files
     problems = []
     add = lambda kind, name, what: problems.append((kind, name, what))
     seen = set()
@@ -89,8 +97,8 @@ def check(files):
         stripped = text.strip()
         lines = [l[:-1] if l.endswith("\r") else l for l in text.split("\n")]   # not splitlines(): it treats a form feed as a line break
 
-        if name in KEY_FILES and len(data) < KEY_FILES[name]:
-            add("size", name, "%d bytes; a real copy is over %d" % (len(data), KEY_FILES[name]))
+        if name in key_files and len(data) < key_files[name]:
+            add("size", name, "%d bytes; a real copy is over %d" % (len(data), key_files[name]))
         if stripped and WHOLE_FILE_COMMAND.match(stripped):
             add("placeholder", name, "the whole file is the unexpanded command %r" % stripped[:80])
         elif ext in PROSE_EXT:
@@ -128,7 +136,7 @@ def check(files):
             err = syntax_check(["node", "--check"], data, ext)
             if err:
                 add("js", name, err)
-    for name in KEY_FILES:
+    for name in key_files:
         if name not in seen:
             add("size", name, "missing (this key file should exist)")
     return problems
@@ -143,7 +151,11 @@ def main(argv=None):
     except (OSError, subprocess.CalledProcessError) as exc:
         print("git failed (run inside the repository; is the revision right?):", exc, file=sys.stderr)
         return 2
-    problems = check(files)
+    try:
+        problems = check(files)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
     by_kind = {}
     for kind, where, what in problems:
         by_kind.setdefault(kind, []).append((where, what))

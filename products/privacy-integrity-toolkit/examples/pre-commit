@@ -1,0 +1,11 @@
+#!/bin/sh
+# Privacy and Integrity Toolkit: git pre-commit hook.
+# Install: copy to .git/hooks/pre-commit, then run: chmod +x .git/hooks/pre-commit
+# Set PRIVACY_TOOLKIT to the folder holding the toolkit if it isn't tools/privacy-toolkit.
+TOOLS="${PRIVACY_TOOLKIT:-tools/privacy-toolkit}"
+python3 "$TOOLS/check_repo.py" || { echo "Broken or placeholder files found (see above)."; exit 1; }
+python3 "$TOOLS/privacy_scan.py" --staged || {
+  echo "Private material found in what you're committing (see above)."
+  echo "Remove it, or add 'privacy-scan: ok' to a line you have reviewed."
+  exit 1
+}

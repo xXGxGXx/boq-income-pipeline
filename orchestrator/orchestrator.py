@@ -414,7 +414,11 @@ class Orchestrator:
 
     def start(self, task: Task, provider: str) -> TaskResult:
         return TaskResult(task_id=task.id, provider=provider, status="running", started_at=now(),
-                          metadata={"routed_by": "provider" if task.provider in PROVIDERS else (task.task_type or "keywords")})
+                          metadata={
+                              "routed_by": "provider" if task.provider in PROVIDERS else (task.task_type or "keywords"),
+                              "data_classification": str(task.context.get("data_classification", "public")).strip().lower(),
+                              "external_processing_approved": task.context.get("allow_external_processing") is True,
+                          })
 
     def finish(self, result: TaskResult, status: str, error: str | None = None, metadata: dict | None = None) -> TaskResult:
         result.status = status

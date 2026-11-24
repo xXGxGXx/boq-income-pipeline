@@ -5,9 +5,6 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.InetAddress
-import java.net.URL
 
 class ForgeWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     private val progress = context.getSharedPreferences("forge_progress", Context.MODE_PRIVATE)
@@ -32,7 +29,7 @@ class ForgeWorker(context: Context, params: WorkerParameters) : Worker(context, 
                     "note" -> { /* retained as an execution checkpoint */ }
                     "delay" -> Thread.sleep(s.optInt("seconds", 1).coerceIn(1, 60) * 1000L)
                     "notify" -> ForgeNotifications.show(applicationContext, s.optString("text", "Forge workflow step completed"))
-                    "webhook" -> postWebhook(s)
+                    "webhook" -> throw PermanentStepException("Webhook steps are disabled until the connection can pin the resolved address")
                     else -> throw PermanentStepException("Unsupported step: $type")
                 }
                 progress.edit().putInt(key, i + 1).apply()
@@ -56,25 +53,4 @@ class ForgeWorker(context: Context, params: WorkerParameters) : Worker(context, 
         }
     }
 
-    private fun postWebhook(s: JSONObject) {
-        val url = s.getString("url")
-        ForgePolicy.webhookUrlProblem(url)?.let { throw PermanentStepException(it) }      // checked again here, not only at enqueue
-        val parsed = URL(url)
-        val addresses = InetAddress.getAllByName(parsed.host)
-        if (addresses.isEmpty() || !addresses.all { ForgePolicy.isPublicAddress(it) }) {
-            throw PermanentStepException("Webhook host ${parsed.host} resolves to a private or local address")
-        }
-        val conn = parsed.openConnection() as HttpURLConnection
-        try {
-            conn.instanceFollowRedirects = false                                          // a redirect could point past the checks above
-            conn.requestMethod = "POST"
-            conn.connectTimeout = 15000
-            conn.readTimeout = 15000
-            conn.doOutput = true
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.outputStream.use { it.write(s.optString("body", "{}").toByteArray(Charsets.UTF_8)) }
-            val code = conn.responseCode
-            if (code !in 200..299) throw WebhookHttpException(code)
-        } finally { conn.disconnect() }
-    }
 }

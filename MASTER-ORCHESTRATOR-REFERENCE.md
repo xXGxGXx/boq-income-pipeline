@@ -208,7 +208,7 @@ Built from AI Advances self-healing patterns, Copyl, CXAS SCRAPI, NathanMaine/se
 ## DRIVE-CHECKPOINT SKILL (LOCKED 2026-11-23)
 
 **Script/skill:** skills/drive-checkpoint/SKILL.md (GitHub: commits 126bc8e9, 4099a024, 6544fabbaa3f23b8a26d78ccb875227ed04f3321)
-**Drive folders:** primary 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA, backup 1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo
+**Drive folders:** identifiers are kept in private configuration, not in this public file.
 **Pattern:** checkpoint-YYYY-MM-DD.md per day
 
 **Full loop:** detect durable content → write to BOTH Drive folder IDs → sync memory file → confirm aloud → retry on failure → tertiary GitHub fallback if both Drive folders fail
@@ -342,8 +342,7 @@ Module I and auto-continue loop already generate cost, score, and failure data. 
   - automation-forge/ (Automation Forge v4.2.1 source: Gradle project, CHANGES.md with build results)
   - recall_master.py (Termux-side): **not in the repository yet**; its 10-test self-test claim is unverified until it is added
 
-- **Drive primary:** 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA
-- **Drive backup:** 1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo
+- **Drive folders:** identifiers are kept in private configuration, not in this public file.
 - **Memory:** auto-loaded in Grok sessions (664 conversations since 2026-09-04)
 
 ---

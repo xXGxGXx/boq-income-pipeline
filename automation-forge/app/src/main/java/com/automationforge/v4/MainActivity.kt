@@ -22,9 +22,13 @@ class MainActivity : Activity() {
         web.settings.javaScriptEnabled = true
         web.settings.domStorageEnabled = true
         web.settings.allowFileAccess = false
-        web.settings.allowContentAccess = true // SAF URIs are passed only after user selection
+        web.settings.allowContentAccess = false
+        web.settings.allowFileAccessFromFileURLs = false
+        web.settings.allowUniversalAccessFromFileURLs = false
+        web.settings.setSupportMultipleWindows(false)
+        web.settings.javaScriptCanOpenWindowsAutomatically = false
         web.settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-        web.webViewClient = WebViewClient()
+        web.webViewClient = BundledPageClient()
         web.webChromeClient = WebChromeClient()
         web.addJavascriptInterface(ForgeBridge(this), "ForgeNative")
         setContentView(web)
@@ -52,7 +56,19 @@ class MainActivity : Activity() {
             }
         }
     }
-    override fun onBackPressed() { if (web.canGoBack()) web.goBack() else super.onBackPressed() }
+    override fun onBackPressed() { super.onBackPressed() }
+}
+
+private class BundledPageClient : WebViewClient() {
+    private fun allowed(url: String?) = url == "file:///android_asset/index.html"
+    override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean {
+        return !allowed(request.url?.toString())
+    }
+    @Deprecated("Needed for older WebView")
+    override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean = !allowed(url)
+    override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
+        if (!allowed(url)) view.stopLoading() else super.onPageStarted(view, url, favicon)
+    }
 }
 
 class ForgeBridge(private val activity: MainActivity) {
@@ -63,13 +79,13 @@ class ForgeBridge(private val activity: MainActivity) {
         val normalized = JSONArray()
         for (i in 0 until steps.length()) {
             val s = steps.getJSONObject(i); val type = s.optString("type")
-            require(type in setOf("note", "delay", "notify", "webhook")) { "Unsupported step: $type" }
+            require(type != "webhook") { "Webhook steps are disabled until the connection can pin the resolved address" }
+            require(type in setOf("note", "delay", "notify")) { "Unsupported step: $type" }
             val step = JSONObject().put("type", type)
             when (type) {
                 "note" -> step.put("text", s.optString("text").take(500))
                 "delay" -> step.put("seconds", s.optInt("seconds", 1).coerceIn(1, 60))
                 "notify" -> step.put("text", s.optString("text").take(200))
-                "webhook" -> { val url=s.optString("url"); ForgePolicy.webhookUrlProblem(url)?.let { throw IllegalArgumentException(it) }; step.put("url",url.take(2000)); step.put("body",s.optString("body").take(10000)) }
             }; normalized.put(step)
         }
         val waits = (0 until normalized.length()).map { normalized.getJSONObject(it) }.filter { it.getString("type") == "delay" }.map { it.getInt("seconds") }

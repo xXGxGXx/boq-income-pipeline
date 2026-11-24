@@ -93,9 +93,17 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@v5
-        with:
-          gradle-version: "8.14.3"
+      - uses: gradle/actions/setup-gradle@v5        # also checks the wrapper files against Gradle's published checksums
       - name: Unit tests and a debug build
         working-directory: automation-forge
-        run: gradle --no-daemon testDebugUnitTest assembleDebug
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+      - name: Keep the debug APK and test reports (download them from this run's Artifacts section)
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: automation-forge-debug
+          path: |
+            automation-forge/app/build/outputs/apk/debug/*.apk
+            automation-forge/app/build/reports/tests/
+          if-no-files-found: warn
+          retention-days: 14

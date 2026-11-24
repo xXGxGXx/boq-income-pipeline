@@ -43,7 +43,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 | `media-hub/` | Media Hub: a private, offline-first media library web app with a loopback-only server. `README.md` inside explains it. |
 | `orchestrator/` | The tested multi-model orchestrator (Claude Code CLI, xAI, Muse) |
 | `artifacts/orchestrator.py` | A second, older orchestrator (duplicates `orchestrator/`) |
-| `automation-forge/` | Automation Forge 4.2.1, an Android app in Kotlin. Debug builds only; not yet tested on a phone. |
+| `automation-forge/` | Automation Forge 4.2.1, an Android app in Kotlin, with webhook steps switched off. Debug builds only; not yet tested on a phone. Every push builds it, and the run keeps the APK as a download. |
 | `MASTER-ORCHESTRATOR-REFERENCE.md` | Design for the voice-first Android stack, about 29.5 KB. If you see a one-line file, it's broken: restore it from git history. |
 | `.claude/skills/media-hub-master/` | Skill with the full working rules, plus tested scripts (server audit, privacy scan, checksums, build splitter) |
 | `scripts/` | `check_repo.py` and `privacy_scan.py`, with their tests |
@@ -58,7 +58,7 @@ python3 .claude/skills/media-hub-master/scripts/test_scripts.py      # privacy s
 python3 -m unittest orchestrator/test_orchestrator.py                 # needs: pip install httpx
 python3 artifacts/test_orchestrator.py                               # needs: pip install requests
 bash media-hub/tests/run_all.sh                                      # needs Pillow and ffmpeg; browser suites need Playwright
-cd automation-forge && gradle testDebugUnitTest assembleDebug        # Gradle 8.14, JDK 21, Android SDK 36
+cd automation-forge && ./gradlew testDebugUnitTest assembleDebug     # JDK 17+, Android SDK 36
 ```
 
 ## Secrets

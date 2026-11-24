@@ -369,7 +369,7 @@ document.addEventListener('click',async event=>{
 $('androidBridgeToken').addEventListener('input',e=>{bridgeTokenSession=e.target.value;});
 $('fileInput').addEventListener('change',e=>intakeFiles(e.target.files));$('folderInput').addEventListener('change',e=>intakeFiles(e.target.files));$('backupInput').addEventListener('change',e=>importBackup(e.target.files?.[0]));$('taskSearch').addEventListener('input',renderTasks);$('taskFilter').addEventListener('change',renderTasks);$('engineFlow').addEventListener('change',renderEngine);['renamePrefix','renameSuffix','renameFind','renameReplace'].forEach(id=>$ (id).addEventListener('input',renderRenamePreview));
 const drop=$('fileDrop');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover');});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');intakeFiles(e.dataTransfer.files);});
-window.addEventListener('online',()=>{updateNetwork();flushOutbox();});window.addEventListener('offline',updateNetwork);
+window.addEventListener('online',()=>{updateNetwork();});window.addEventListener('offline',updateNetwork);
 
-async function init(){state=await loadState();await persist();renderAll();setupPWA();updateNetwork();await renderStorage();if(navigator.onLine)flushOutbox();}
+async function init(){state=await loadState();await persist();renderAll();setupPWA();updateNetwork();await renderStorage();/* Queued webhook payloads are not sent automatically. */}
 init().catch(error=>{console.error(error);toast('Forge could not initialise. Export or reload if the problem persists.');});

@@ -2,8 +2,6 @@
 # Reviewed findings accepted by privacy_scan.py --baseline (category, path, masked detail).
 # Remove a line when its file is fixed; add lines only after checking that the finding is safe to publish.
 catalog	.claude/skills/media-hub-master/evals/public-repo-private-build/files/repo/media-hub/catalog.json	personal catalog or media manifest
-cloud	MASTER-ORCHESTRATOR-REFERENCE.md	Drive ID 1LZa-Xln…YdVo
-cloud	MASTER-ORCHESTRATOR-REFERENCE.md	Drive ID 1fd66zXG…YyHA
 cloud	research/ndis-prompt-pack-research-2026-11-23.md	Drive ID 1LZa-Xln…YdVo
 cloud	research/ndis-prompt-pack-research-2026-11-23.md	Drive ID 1fd66zXG…YyHA
 cloud	skills/drive-checkpoint/SKILL.md	Drive ID 1LZa-Xln…YdVo

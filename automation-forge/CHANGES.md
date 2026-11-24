@@ -1,3 +1,20 @@
+# Automation Forge 4.2.1 integration notes
+
+This branch copies the 4.2.1 source and then disables two things the 4.2.1 build still did:
+
+- Native webhook steps are rejected in `MainActivity.normalizeWorkflow` and `ForgeWorker`. `postWebhook` was removed. Hostname screening is not treated as a complete protection against a rebinding attack.
+- The WebView only allows `file:///android_asset/index.html`. Other top-level loads are blocked. File access from the page, mixed content, and extra windows are off. The back button no longer walks WebView history.
+- The bundled page no longer sends queued webhook payloads when it loads or when the network returns. A send still requires the on-screen confirm button.
+
+Not done in that commit: Gradle unit tests, APK assembly, and a phone test.
+
+## Build results for this hardened version (2026-11-24)
+- Built in a Linux container with Gradle 8.14.3, JDK 21, Android SDK platform 36 and build-tools 35.0.0: `testDebugUnitTest` ran **7 tests, 0 failures**, and `assembleDebug` made a debug APK of about 2.9 MB.
+- The same build runs on every push in `.github/workflows/checks.yml` (job "Automation Forge"). Each run keeps the debug APK and test reports as a downloadable artifact for 14 days.
+- A Gradle wrapper (`./gradlew`, Gradle 8.14.3) is now included, so Android Studio and CI use the same Gradle version.
+- Still not done: a test on a phone, and release signing.
+
+
 # Automation Forge 4.2.1 (fixes to 4.2)
 
 ## Build results (2026-11-23, Gradle 8.14.3, JDK 21, Android SDK platform 36, build-tools 35.0.0)

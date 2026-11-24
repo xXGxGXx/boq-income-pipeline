@@ -31,7 +31,7 @@ class MainActivity : Activity() {
         web.settings.javaScriptCanOpenWindowsAutomatically = false
         web.settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         web.webViewClient = BundledPageClient()
-                web.addJavascriptInterface(ForgeBridge(this), "ForgeNative")
+        web.addJavascriptInterface(ForgeBridge(this), "ForgeNative")
         setContentView(web)
         web.loadUrl("file:///android_asset/index.html")
     }

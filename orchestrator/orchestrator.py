@@ -44,13 +44,18 @@ MUSE_API_URL = os.getenv("MUSE_API_URL", "")
 MUSE_API_KEY = os.getenv("MUSE_API_KEY", "")
 MUSE_MODEL = os.getenv("MUSE_MODEL", "muse-default")
 
+# OpenAI model is deliberately required from the environment; do not guess a model name.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "")
+OPENAI_API_URL = "https://api.openai.com/v1/responses"
+
 CLAUDE_BIN = os.getenv("CLAUDE_BIN", "claude")
 CLAUDE_WORKDIR = os.getenv("CLAUDE_WORKDIR", os.getcwd())
 CLAUDE_TIMEOUT = int(os.getenv("CLAUDE_TIMEOUT", "900"))
 CLAUDE_ALLOWED_TOOLS = os.getenv("CLAUDE_ALLOWED_TOOLS", "Read,Grep,Glob")
 
 LOG_LEVEL = os.getenv("ORCHESTRATOR_LOG_LEVEL", "INFO").upper()
-PROVIDERS = ("claude", "grok", "muse")
+PROVIDERS = ("claude", "grok", "muse", "openai")
 MAX_RETRY_AFTER = 120.0                                        # never sleep longer than this on one Retry-After
 
 # ------------------------------- data models ------------------------------
@@ -102,6 +107,8 @@ def route_task(task: Task) -> str:
         return "grok"
     if task.task_type in {"creative", "multimedia", "design", "content"}:
         return "muse"
+    if task.task_type in {"openai", "openai_responses"}:
+        return "openai"
     text = f"{task.prompt} {json.dumps(task.context, default=str)}"
     scores = {
         "claude": len(re.findall(CODE, text, re.I)) * 1.25,   # coding signals weigh most
@@ -138,7 +145,8 @@ class AsyncTokenBucket:
 
 
 class RateLimiter:
-    DEFAULTS = {"claude": (".5", "2", "2"), "grok": ("1", "3", "5"), "muse": ("1", "3", "5")}
+    DEFAULTS = {"claude": (".5", "2", "2"), "grok": ("1", "3", "5"), "muse": ("1", "3", "5"),
+                "openai": ("1", "3", "5")}
 
     def __init__(self):
         self.buckets, self.semaphores = {}, {}
@@ -194,7 +202,16 @@ class Orchestrator:
         async with self.global_semaphore:
             try:
                 async with self.limiter.semaphores[provider]:
-                    runner = {"claude": self.run_claude, "grok": self.run_grok, "muse": self.run_muse}[provider]
+                    classification = str(task.context.get("data_classification", "public")).strip().lower()
+                    restricted = {"private", "client", "financial", "health", "sensitive", "restricted"}
+                    if classification in restricted and task.context.get("allow_external_processing") is not True:
+                        return self.failure(
+                            task, provider,
+                            f"Blocked before provider call: data_classification={classification!r} requires "
+                            "explicit allow_external_processing=true. This policy flag does not inspect prompt contents."
+                        )
+                    runner = {"claude": self.run_claude, "grok": self.run_grok, "muse": self.run_muse,
+                              "openai": self.run_openai}[provider]
                     return await runner(task)
             except asyncio.CancelledError:
                 return self.failure(task, provider, "Task cancelled during shutdown.")
@@ -271,6 +288,30 @@ class Orchestrator:
         return await self.http_with_retry(task, "muse", MUSE_API_URL, payload,
                                           {"Authorization": f"Bearer {MUSE_API_KEY}"}, self.parse_muse_response)
 
+    async def run_openai(self, task: Task) -> TaskResult:
+        """Call the OpenAI Responses API; web search is opt-in per task."""
+        if not OPENAI_API_KEY:
+            return self.failure(task, "openai", "Missing OPENAI_API_KEY.")
+        if not OPENAI_MODEL:
+            return self.failure(task, "openai", "Missing OPENAI_MODEL; set a model available to your project.")
+        input_text = (
+            "You are a careful assistant. Separate sourced facts from inference, state uncertainty, "
+            "and do not invent citations.\n\n"
+            f"Task:\n{task.prompt}\n\nContext:\n{json.dumps(task.context, indent=2, default=str)}"
+        )
+        payload: dict[str, Any] = {"model": OPENAI_MODEL, "input": input_text, "store": False}
+        if task.context.get("web_search") is True:
+            payload["tools"] = [{"type": "web_search"}]
+        if isinstance(task.context.get("max_output_tokens"), int):
+            payload["max_output_tokens"] = max(16, min(task.context["max_output_tokens"], 16384))
+        effort = task.context.get("reasoning_effort")
+        if effort in {"low", "medium", "high", "xhigh"}:
+            payload["reasoning"] = {"effort": effort}
+        return await self.http_with_retry(
+            task, "openai", OPENAI_API_URL, payload,
+            {"Authorization": f"Bearer {OPENAI_API_KEY}"}, self.parse_responses_response
+        )
+
     async def http_with_retry(self, task: Task, provider: str, url: str, payload: dict, headers: dict,
                               parser: Callable[[dict], dict]) -> TaskResult:
         result = self.start(task, provider)
@@ -330,6 +371,46 @@ class Orchestrator:
             raise TypeError("expected a JSON object")
         output = next((data[k] for k in ("output", "content", "text", "result", "response") if k in data), data)
         return {"output": output if isinstance(output, str) else json.dumps(output, ensure_ascii=False)}
+
+    @staticmethod
+    def parse_responses_response(data: dict) -> dict:
+        """Parse text and URL citation annotations from a Responses API JSON response."""
+        if not isinstance(data, dict):
+            raise TypeError("expected a JSON object")
+        chunks: list[str] = []
+        citations: list[dict[str, str]] = []
+        direct_text = data.get("output_text")
+        if isinstance(direct_text, str) and direct_text:
+            chunks.append(direct_text)
+        for item in data.get("output", []) or []:
+            if not isinstance(item, dict) or item.get("type") != "message":
+                continue
+            for part in item.get("content", []) or []:
+                if not isinstance(part, dict):
+                    continue
+                if part.get("type") in {"output_text", "text"} and isinstance(part.get("text"), str):
+                    if not direct_text:
+                        chunks.append(part["text"])
+                    for annotation in part.get("annotations", []) or []:
+                        if not isinstance(annotation, dict) or annotation.get("type") != "url_citation":
+                            continue
+                        citation = annotation.get("url_citation", annotation)
+                        if isinstance(citation, dict) and isinstance(citation.get("url"), str):
+                            entry = {"url": citation["url"]}
+                            if isinstance(citation.get("title"), str):
+                                entry["title"] = citation["title"]
+                            if entry not in citations:
+                                citations.append(entry)
+        output = "\n\n".join(chunks).strip()
+        if not output:
+            raise ValueError("Responses API returned no output text")
+        usage = data.get("usage") or {}
+        return {
+            "output": output,
+            "input_tokens": usage.get("input_tokens"),
+            "output_tokens": usage.get("output_tokens"),
+            "metadata": {"model": data.get("model"), "response_id": data.get("id"), "citations": citations},
+        }
 
     def start(self, task: Task, provider: str) -> TaskResult:
         return TaskResult(task_id=task.id, provider=provider, status="running", started_at=now(),

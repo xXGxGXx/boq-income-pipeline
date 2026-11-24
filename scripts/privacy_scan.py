@@ -18,6 +18,8 @@ Flags, by category
   device     paths on a phone or computer: /storage/emulated/0, content://, /sdcard, Termux homes, C:\\Users\\name, /Users/name
   email      email addresses (example.com / example.org / noreply addresses are ignored)
   secret     API keys and tokens (Anthropic, OpenAI, xAI, GitHub, AWS, Google, Slack), private keys, bearer tokens
+  bank       bank details: BSB and account numbers, IBANs (checksum-checked), payment card numbers (Luhn-checked) and
+             Australian tax file numbers (checksum-checked); shown with all but the last 2 digits hidden
   term       any word from --terms (one per line, case-insensitive; keep that file OUTSIDE the repository)
   large      files over --max-mb (default 5)
 A line containing "privacy-scan: ok" is accepted as reviewed; "privacy-scan: ignore-file" in a file's first 5 lines skips it.
@@ -45,6 +47,12 @@ PATTERNS = [
 ]
 DRIVE_ID = re.compile(r"(?<![\w-])1[A-Za-z0-9_-]{24,43}(?![\w-])")
 DRIVE_CONTEXT = re.compile(r"drive|folder|gdoc|google ?doc|docs\.google", re.I)
+BSB_NO = re.compile(r"(?i)\bBSB\b[\s:#.-]*(\d{3}[- ]?\d{3})(?!\d)")
+BSB_ACCT = re.compile(r"(?<![\d.])(\d{3}[- ]?\d{3}\s*/\s*(?:(?:acc(?:ount|t)?|a/c)\.?\s*(?:no\.?\s*)?)?\d{6,10})(?![\d.])", re.I)
+ACCOUNT_NO = re.compile(r"(?i)\b(?:acc(?:ount|t)?|a/c)\.?(?:\s*(?:no\.?|number|num|#))?[\s:#.-]*(\d[\d -]{4,13}\d)(?![\d.])")
+IBAN = re.compile(r"\b([A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4})?)\b")
+CARD = re.compile(r"(?<![\w.-])([2-6]\d{3}(?:[ -]?\d){9,15})(?![\w.-])")
+TFN = re.compile(r"(?i)\b(?:tfn|tax file(?: number)?)\b[^0-9\n]{0,20}(\d{3}[ -]?\d{3}[ -]?\d{2,3})(?!\d)")
 EMAIL_OK = re.compile(r"@(?:(?:[\w-]+\.)*example\.(?:com|org|net)|[\w.-]+\.invalid|anthropic\.com)$|^(?:noreply|no-reply|git|user|you|name)@", re.I)
 
 
@@ -56,6 +64,61 @@ def read_bytes(path):
 def mask(s):
     s = s.strip()
     return s if len(s) <= 12 else s[:8] + "…" + s[-4:]
+
+
+def mask_digits(s):
+    """Hide every digit but the last two, so a report never repeats a real number."""
+    return re.sub(r"\d(?=(?:\D*\d){2})", "•", s.strip())
+
+
+def luhn_ok(digits):
+    total = 0
+    for i, d in enumerate(reversed(digits)):
+        n = int(d) * (2 if i % 2 else 1)
+        total += n - 9 if n > 9 else n
+    return 13 <= len(digits) <= 19 and total % 10 == 0
+
+
+def iban_ok(iban):
+    s = iban.replace(" ", "")
+    if not 15 <= len(s) <= 34:
+        return False
+    moved = s[4:] + s[:4]
+    return int("".join(str(int(c, 36)) for c in moved)) % 97 == 1
+
+
+def tfn_ok(digits):
+    weights = (1, 4, 3, 7, 5, 8, 6, 9, 10) if len(digits) == 9 else (10, 7, 8, 4, 6, 3, 5, 1)
+    return len(digits) in (8, 9) and sum(int(d) * w for d, w in zip(digits, weights)) % 11 == 0
+
+
+def bank_findings(line):
+    """Bank, card and tax numbers on one line, as masked descriptions (empty when there are none)."""
+    out, seen = [], set()
+
+    def add(kind, raw):
+        digits = re.sub(r"\D", "", raw)
+        if not any(digits in s for s in seen):
+            seen.add(digits); out.append("%s %s" % (kind, mask_digits(raw)))
+    for m in BSB_ACCT.finditer(line):
+        add("BSB and account number", m.group(1))
+    for m in BSB_NO.finditer(line):
+        add("BSB", m.group(1))
+    for m in ACCOUNT_NO.finditer(line):
+        raw = m.group(1)
+        if len(re.sub(r"\D", "", raw)) >= 6 and not any(re.sub(r"\D", "", raw) in s for s in seen):
+            add("account number", raw)
+    for m in IBAN.finditer(line):
+        if iban_ok(m.group(1)):
+            add("IBAN", m.group(1))
+    for m in CARD.finditer(line):
+        digits = re.sub(r"\D", "", m.group(1))
+        if luhn_ok(digits):
+            add("card number", m.group(1))
+    for m in TFN.finditer(line):
+        if tfn_ok(re.sub(r"\D", "", m.group(1))):
+            add("tax file number", m.group(1))
+    return out
 
 
 def git(*args):
@@ -135,6 +198,8 @@ def scan(files, terms=(), max_mb=5.0, allow=()):
                     if cat == "email" and EMAIL_OK.search(m.group(0)):
                         continue
                     findings.append((cat, name, ln, mask(m.group(0))))
+            for what in bank_findings(line):
+                findings.append(("bank", name, ln, what))
             if DRIVE_CONTEXT.search(line):
                 for m in DRIVE_ID.finditer(line):
                     tok = m.group(0)

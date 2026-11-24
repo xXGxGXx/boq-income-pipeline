@@ -16,6 +16,8 @@ GOOD = {
     "run.sh": "#!/usr/bin/env bash\necho \"$(date)\"\n",                      # a real substitution inside a script is fine
     "guide.md": "Example:\n\n```bash\n$(cat notes.md)\n```\n",               # and so is one inside a code block
     "sw.template.js": "const SHELL = {{SHELL}};\n",                          # templates are not plain JavaScript
+    ".check-repo.json": '{"min_bytes": {"MASTER-ORCHESTRATOR-REFERENCE.md": 10000, "README.md": 300, '
+                        '"LICENSE": 500, "AGENTS.md": 500}}\n',
 }
 
 
@@ -86,6 +88,15 @@ class CheckRepo(unittest.TestCase):
         self.write(files)
         code, out = self.run_check()
         self.assertEqual(code, 1); self.assertIn("AGENTS.md  missing", out)
+
+    def test_no_config_means_no_key_files(self):                      # a buyer's repository with none of these documents
+        self.write({"app.py": "print('hi')\n", "README.md": "short\n"})
+        code, out = self.run_check()
+        self.assertEqual(code, 0, out)
+
+    def test_bad_config_is_a_usage_error(self):
+        self.write(dict(GOOD, **{".check-repo.json": '{"min_bytes": {"README.md": "lots"}}'}))
+        self.assertEqual(self.run_check()[0], 2)
 
     def test_checks_a_commit_without_checking_it_out(self):
         self.write(dict(GOOD, **{"MASTER-ORCHESTRATOR-REFERENCE.md": "$(cat /tmp/m.md)"}))

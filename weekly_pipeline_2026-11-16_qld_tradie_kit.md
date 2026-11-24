@@ -122,6 +122,6 @@ Ready to quote more and admin less? Download now.
 - Multi-product suite (Tradie + Sole Trader + NDIS) compounds better per Gumroad data.
 
 ## Recommended next action
-Publish on Gumroad now (or schedule). Use the cover as product image, IG/Pinterest for organic posts. Money stays on platform until confirmed transfer to BoQ 124001 / 20026470 (Kyle Beskin-Clark).
+Publish on Gumroad now (or schedule). Use the cover as product image, IG/Pinterest for organic posts. Money stays on platform until confirmed transfer to the owner's payout account (details kept private, never in this repository) (Kyle Beskin-Clark).
 
 **Auto-approved for publishing path — user can override within 24h.**

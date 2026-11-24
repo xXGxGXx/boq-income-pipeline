@@ -1,5 +1,5 @@
 # Weekly Income Pipeline Auto-Run – 2026-11-23
-**For:** Kyle Beskin-Clark | BoQ BSB 124001 / Acc 20026470  
+**For:** repository owner | the owner's payout account (details kept private, never in this repository)  
 **Run time:** Monday 23 Nov 2026 ~09:05 AEST  
 **Status:** Auto-approved for publishing path — user can override within 24h
 

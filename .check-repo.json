@@ -1,0 +1,8 @@
+{
+  "min_bytes": {
+    "MASTER-ORCHESTRATOR-REFERENCE.md": 10000,
+    "README.md": 300,
+    "LICENSE": 500,
+    "AGENTS.md": 500
+  }
+}

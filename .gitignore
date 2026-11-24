@@ -11,4 +11,7 @@ local.properties
 *.aab
 *.jks
 *.keystore
-release-out/
+
+# Local personal catalogs, client records, links and media manifests
+/private/
+**/private/

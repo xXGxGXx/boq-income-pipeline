@@ -57,7 +57,7 @@ python3 scripts/test_check_repo.py                                   # repositor
 python3 .claude/skills/media-hub-master/scripts/test_scripts.py      # privacy scan, checksums, server audit
 python3 -m unittest orchestrator/test_orchestrator.py                 # needs: pip install httpx
 python3 artifacts/test_orchestrator.py                               # needs: pip install requests
-bash media-hub/tests/run_all.sh                                      # needs ffmpeg; browser suites need Playwright
+bash media-hub/tests/run_all.sh                                      # needs Pillow and ffmpeg; browser suites need Playwright
 cd automation-forge && gradle testDebugUnitTest assembleDebug        # Gradle 8.14, JDK 21, Android SDK 36
 ```
 

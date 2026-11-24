@@ -12,3 +12,4 @@
 .forge-builder>strong,.native-audit>strong{display:block;margin-bottom:10px;letter-spacing:.08em;font-size:.78rem}
 .builder-row{display:flex;gap:8px;flex-wrap:wrap}.builder-row select,.builder-row input{min-width:0;flex:1;padding:10px;border-radius:9px;border:1px solid var(--border,rgba(140,150,170,.3));background:var(--surface,rgba(20,25,35,.4));color:inherit}
 .forge-builder small{display:block;opacity:.75;margin-top:8px}.native-audit{margin-top:14px;padding:12px;border:1px solid var(--border,rgba(140,150,170,.25));border-radius:12px}.audit-event{display:grid;grid-template-columns:90px 1fr;gap:6px;padding:8px 0;border-bottom:1px solid rgba(140,150,170,.12);font-size:.85rem}.audit-event span{overflow-wrap:anywhere}.audit-event small{grid-column:2;opacity:.65;font-size:.72rem}
+.native-notify{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.native-notify-off{color:#f3b76c}

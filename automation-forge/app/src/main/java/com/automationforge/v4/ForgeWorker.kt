@@ -28,7 +28,11 @@ class ForgeWorker(context: Context, params: WorkerParameters) : Worker(context, 
                 when (type) {
                     "note" -> { /* retained as an execution checkpoint */ }
                     "delay" -> Thread.sleep(s.optInt("seconds", 1).coerceIn(1, 60) * 1000L)
-                    "notify" -> ForgeNotifications.show(applicationContext, s.optString("text", "Forge workflow step completed"))
+                    "notify" -> {
+                        // A blocked notification is recorded, not retried: retrying can't change a setting, and would replay earlier steps
+                        val (event, detail) = NotificationGate.historyEntry(ForgeNotifications.show(applicationContext, s.optString("text", "Forge workflow step completed")))
+                        history.log(workId, label, event, detail)
+                    }
                     "webhook" -> throw PermanentStepException("Webhook steps are disabled until the connection can pin the resolved address")
                     else -> throw PermanentStepException("Unsupported step: $type")
                 }

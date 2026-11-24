@@ -1,7 +1,10 @@
 package com.automationforge.v4
 
+import android.Manifest
 import android.app.Activity
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.content.Intent
 import android.net.Uri
 import android.webkit.WebView
@@ -15,7 +18,8 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
-    companion object { private const val PICK_JSON = 401 }
+    companion object { private const val PICK_JSON = 401; private const val ASK_NOTIFICATIONS = 402; private const val ASKED_KEY = "asked_notifications" }
+    private val prefs by lazy { getSharedPreferences("forge_prefs", MODE_PRIVATE) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         web = WebView(this)
@@ -33,6 +37,38 @@ class MainActivity : Activity() {
         web.addJavascriptInterface(ForgeBridge(this), "ForgeNative")
         setContentView(web)
         web.loadUrl("file:///android_asset/index.html")
+        maybeAskForNotifications()
+    }
+    /** Android 13+: ask once on first launch. After that, the panel's "Allow notifications" button is the way back. */
+    private fun maybeAskForNotifications() {
+        if (NotificationGate.shouldAskAtLaunch(Build.VERSION.SDK_INT, ForgeNotifications.permissionGranted(this), prefs.getBoolean(ASKED_KEY, false))) {
+            askForNotifications()
+        }
+    }
+    private fun askForNotifications() {
+        prefs.edit().putBoolean(ASKED_KEY, true).apply()
+        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), ASK_NOTIFICATIONS)
+    }
+    /** The panel's button: show the system dialog while Android still allows it, otherwise open this app's notification settings. */
+    fun allowNotifications() {
+        val block = ForgeNotifications.status(this)
+        val rationale = Build.VERSION.SDK_INT >= NotificationGate.PERMISSION_SDK && shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+        when (NotificationGate.nextAction(Build.VERSION.SDK_INT, block, prefs.getBoolean(ASKED_KEY, false), rationale)) {
+            NotifyAction.REQUEST_PERMISSION -> askForNotifications()
+            NotifyAction.OPEN_SETTINGS -> startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+            NotifyAction.NONE -> tellPageNotificationStatusChanged()
+        }
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == ASK_NOTIFICATIONS) tellPageNotificationStatusChanged()
+    }
+    override fun onResume() {
+        super.onResume()
+        if (::web.isInitialized) tellPageNotificationStatusChanged()   // the user may be back from Android settings
+    }
+    private fun tellPageNotificationStatusChanged() {
+        web.evaluateJavascript("window.ForgeNotificationStatusChanged && window.ForgeNotificationStatusChanged();", null)
     }
     fun pickJson() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -113,4 +149,9 @@ class ForgeBridge(private val activity: MainActivity) {
     @android.webkit.JavascriptInterface fun getExecutionHistory(): String = try { ForgeHistory(activity).recent(150).toString() } catch(e:Exception) { JSONArray().toString() }
     @android.webkit.JavascriptInterface fun clearExecutionHistory(): String = try { ForgeHistory(activity).clear(); "cleared" } catch(e:Exception) { "error: ${e.message ?: "clear failed"}" }
     @android.webkit.JavascriptInterface fun openJsonPicker(): String { activity.runOnUiThread { activity.pickJson() }; return "picker_opened" }
+    @android.webkit.JavascriptInterface fun notificationStatus(): String = try {
+        val block = ForgeNotifications.status(activity)
+        JSONObject().put("enabled", block == NotifyBlock.NONE).put("reason", block.name.lowercase()).put("message", NotificationGate.message(block)).toString()
+    } catch (e: Exception) { JSONObject().put("enabled", false).put("reason", "unknown").put("message", "Notification status unavailable").toString() }
+    @android.webkit.JavascriptInterface fun allowNotifications(): String { activity.runOnUiThread { activity.allowNotifications() }; return "requested" }
 }

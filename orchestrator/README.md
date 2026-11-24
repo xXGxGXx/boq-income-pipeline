@@ -19,3 +19,26 @@ python3 -m unittest test_orchestrator.py                 # 18 tests, fake provid
 - **Exit code:** 0 when every task succeeded, 1 otherwise, 2 when the tasks file can't be used (it names the problem: missing prompt, unknown provider, duplicate id).
 
 Fixed from the draft it came from: `Task` couldn't be created (a `provider` field and a read-only `provider` property shared one name, and the loader passed a nonexistent `_provider`); an HTTP-date `Retry-After` crashed the retry loop; malformed replies escaped as unhandled errors; a run that ended on a rate limit reported no error; `priority` was ignored; the Claude subprocess could wait for keyboard input; report output containing ``` could break the Markdown.
+
+
+## Optional OpenAI Responses API provider
+
+Set \`OPENAI_API_KEY\` and \`OPENAI_MODEL\` to a model enabled for your project. The model name is deliberately not guessed.
+
+Use \`"provider": "openai"\` on a task or \`"task_type": "openai"\`. Set \`"web_search": true\` in that task's context to enable the Responses API \`web_search\` tool; it is off by default. The adapter sends \`store: false\`, parses output text and URL citations, and records response ID/model/token usage in the report.
+
+Example task:
+\`\`\`json
+{
+  "id": "research-current",
+  "provider": "openai",
+  "prompt": "Research the current state of the topic and cite primary sources.",
+  "context": {"web_search": true, "reasoning_effort": "high", "max_output_tokens": 3000}
+}
+\`\`\`
+
+### Data handling gate
+
+Tasks with \`context.data_classification\` set to \`private\`, \`client\`, \`financial\`, \`health\`, \`sensitive\` or \`restricted\` are blocked before any provider call unless that task also sets \`allow_external_processing: true\`. This is an operator policy switch, **not** an automatic content scanner. Classify tasks accurately and keep private records out of task files. The gate applies to every provider, not only OpenAI. Reports record the classification and whether the override was explicitly set.
+
+OpenAI states API data is not used for model training by default, but abuse-monitoring logs may be retained for up to 30 days. Responses application-state retention depends on \`store\` and endpoint/features; this adapter sets \`store: false\`, which is not a promise of zero retention. Zero Data Retention requires eligible account configuration. See [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data).

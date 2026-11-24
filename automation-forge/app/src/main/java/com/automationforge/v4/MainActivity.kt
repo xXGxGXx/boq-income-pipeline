@@ -6,8 +6,10 @@ import android.content.Intent
 import android.net.Uri
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.webkit.WebChromeClient
 import android.webkit.WebSettings
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import java.io.ByteArrayInputStream
 import androidx.work.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,8 +31,7 @@ class MainActivity : Activity() {
         web.settings.javaScriptCanOpenWindowsAutomatically = false
         web.settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         web.webViewClient = BundledPageClient()
-        web.webChromeClient = WebChromeClient()
-        web.addJavascriptInterface(ForgeBridge(this), "ForgeNative")
+                web.addJavascriptInterface(ForgeBridge(this), "ForgeNative")
         setContentView(web)
         web.loadUrl("file:///android_asset/index.html")
     }
@@ -47,7 +48,7 @@ class MainActivity : Activity() {
             val uri = data.data!!
             try {
                 contentResolver.openInputStream(uri)?.use { stream ->
-                    val text = stream.bufferedReader().readText().take(1_000_000)
+                    val text = BoundedImportReader.readUtf8(stream)
                     val safe = JSONObject().put("content", text).toString()
                     web.evaluateJavascript("window.ForgeImportFile && window.ForgeImportFile(${JSONObject.quote(safe)});", null)
                 } ?: throw IllegalStateException("Unable to read selected file")
@@ -61,6 +62,15 @@ class MainActivity : Activity() {
 
 private class BundledPageClient : WebViewClient() {
     private fun allowed(url: String?) = url == "file:///android_asset/index.html"
+    private fun isLocalAsset(url: android.net.Uri): Boolean {
+        val path = url.path ?: return false
+        return url.scheme == "file" && url.host == "android_asset" &&
+            path.startsWith("/") && !path.split("/").contains("..") && path != "/"
+    }
+    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+        if (isLocalAsset(request.url)) return super.shouldInterceptRequest(view, request)
+        return WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
+    }
     override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean {
         return !allowed(request.url?.toString())
     }

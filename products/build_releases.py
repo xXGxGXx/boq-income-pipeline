@@ -40,6 +40,23 @@ def media_hub_starter():
         return out
 
 
+NDIS = ROOT / "products/ndis-sil-compliance-pack"
+
+
+def ndis_office_files():
+    """Word versions of the workflow and every template, and the evidence tracker workbook."""
+    sys.path.insert(0, str(ROOT / "products"))
+    import office_docs
+    out = {"1-workflow/registration-and-audit-workflow.docx":
+           office_docs.markdown_to_docx((NDIS / "workflow.md").read_text(encoding="utf-8"), "SIL registration and audit-readiness workflow")}
+    for md in sorted((NDIS / "templates").glob("*.md")):
+        text = md.read_text(encoding="utf-8")
+        title = text.splitlines()[0].lstrip("# ").strip()
+        out["3-templates/word/%s.docx" % md.stem] = office_docs.markdown_to_docx(text, title)
+    out["3-templates/evidence-tracker.xlsx"] = office_docs.evidence_tracker_xlsx()
+    return out
+
+
 PRODUCTS = {
     "privacy-integrity-toolkit": {
         "version": "1.0.0", "date": (2026, 11, 24),
@@ -58,6 +75,17 @@ PRODUCTS = {
         ],
         "executable": {"privacy_scan.py", "check_repo.py", "verify_checksums.py", "audit_server.py", "split_build.py",
                        "examples/pre-commit"},
+    },
+    "ndis-sil-compliance-pack": {
+        "version": "2.0.0", "date": (2026, 11, 24),
+        "files": [
+            ("products/ndis-sil-compliance-pack/START-HERE.md", "START-HERE.md"),
+            ("products/ndis-sil-compliance-pack/LICENCE.txt", "LICENCE.txt"),
+            ("products/ndis-sil-compliance-pack/workflow.md", "1-workflow/registration-and-audit-workflow.md"),
+            ("products/ndis-sil-compliance-pack/prompts/*.md", "2-prompts/"),
+            ("products/ndis-sil-compliance-pack/templates/*.md", "3-templates/markdown/"),
+        ],
+        "generated": [ndis_office_files],
     },
     "media-hub": {
         "version": "2.3.0", "date": (2026, 11, 24),

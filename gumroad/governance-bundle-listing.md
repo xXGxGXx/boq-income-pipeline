@@ -1,6 +1,7 @@
 # Gumroad Listing: AI Governance Bundle
 
-**Price:** $49 AUD (one-time) | Micro-pack: $5 AUD
+**Price:** A$49 (one-time)
+**Funnel:** A$5 Micro-Pack → A$49 Bundle
 **Category:** Software Development > Developer Tools
 **Tags:** AI agents, automation, memory, monitoring, governance, specs, Python
 
@@ -10,17 +11,25 @@
 AI Governance Bundle — Tiered Memory System v3.2 + Dead Man's Switch
 
 ## Subtitle
-Stop your automations from dying silently. Four-surface integrity, instant alerts, self-healing bootstrap.
+A$5 to try the alert hook. A$49 for the full system. Know in seconds if an automation goes silent.
 
 ## Description
 
 ### The problem
 
-You built an automation. It runs on a schedule. One day it stops — and you find out three weeks later when the damage is done. Meanwhile your agent's memory is flat text that drifts, gets overwritten, or vanishes without a trace. Nobody told you. Nothing logged it.
+You built an automation. It runs on a schedule. One day it stops — and you find out weeks later. Meanwhile your agent's memory drifts, gets overwritten, or disappears. Nobody told you. Nothing logged it.
 
-### What's inside
+### The A$5-to-A$49 funnel
+
+- **A$5 Micro-Pack** — one SKILL.md: the instant-alert hook and a canonical marker stub. Verify the pattern in your runtime. A real purchase, not a drive-by download.
+- **A$49 Bundle** — the upgrade: Tiered Memory System v3.2 plus Dead Man's Switch. This is the product.
+
+Start at A$5 if you want to test the hook. Upgrade when it works in your runtime. Or go straight to the bundle.
+
+### What's inside the A$49 bundle
 
 **Tiered Memory System v3.2** (the spec)
+
 - Hot / warm / cold tiers with access-frequency promotion
 - Four-surface redundancy: memory + primary Drive + backup Drive + GitHub, all SHA-checksummed
 - Versioned self-healing bootstrap — if the rule gets clobbered, surviving copies carry the revision number to restore from
@@ -34,18 +43,16 @@ You built an automation. It runs on a schedule. One day it stops — and you fin
 - True quarantine surface: a fifth copy excluded from all retrieval paths
 
 **Dead Man's Switch** (the monitor)
+
 - Universal one-line emitter contract: any script, Zapier, Make, or cron flow can ping it
 - Dual-surface proof: Drive heartbeat file + GitHub commit
 - Instant app-only alerts on silence
 - Self-monitoring with monitor-dead vs component-dead classification
 - Landing page: https://dead-mans-switch-landing-kylebesk1-7661.vercel.app
 
-**Entry SKU (separate, $12-19)**
-Three-tier starter with canonical marker and instant-alert hook. Free teaser version included to try before buying.
-
 ### Who it's for
 
-Solo builders running AI agents or scheduled automations who are the entire ops team. If silence means something broke and you'd rather not find out the hard way, this is it.
+Solo builders running AI agents or scheduled automations who are the entire ops team. If silence means something broke, start at A$5 and upgrade to A$49 when you're ready.
 
 ### What's NOT included
 
@@ -57,22 +64,13 @@ Quarterly title and spec refreshes. Version history preserved in the repo for ro
 
 ### Links
 
-- Full spec: github.com/xXGxGXx/boq-income-pipeline/blob/main/skills/tiered-memory-system/v3.2.md
-- Dead Man's Switch repo: github.com/xXGxGXx/dead-mans-switch
+- Full spec: https://github.com/xXGxGXx/boq-income-pipeline/blob/main/skills/tiered-memory-system/v3.2.md
+- Dead Man's Switch repo: https://github.com/xXGxGXx/dead-mans-switch
 - Landing page: https://dead-mans-switch-landing-kylebesk1-7661.vercel.app
-
----
-
-## $5 Micro-Pack (top of funnel)
-
-**Title:** AI Governance Micro-Pack — Instant Alert Hook + Marker Stub
-**Price:** $5 AUD
-**Contents:** One SKILL.md with the instant-alert hook pattern and one canonical marker stub. Enough to verify the concept in your runtime. Upgrades to the $49 bundle.
-
-**Why $5:** Sub-$10 captures under 1% of platform revenue on its own, but as a funnel it converts 28% better into the $30-49 band. It's a filter, not a product.
+- Micro-Pack listing (A$5): gumroad/micro-pack-listing.md
 
 ---
 
 ## Cover image brief (for Canva)
 
-Dark background. One line: "Your automation didn't fire." Below: "You'd know in seconds." Minimal. No stock photos. Monospace font for the alert line.
+Dark background. One line: "Your automation didn't fire." Below: "You'd know in seconds." Small footer: "A$5 to try the hook. A$49 for the system." Minimal. No stock photos. Monospace font for the alert line.

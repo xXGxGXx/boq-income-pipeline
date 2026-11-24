@@ -377,4 +377,36 @@ Both are lightweight templates + documentation (not full apps). Validated with Z
 
 **Next:** Can be packaged as the first public digital products from the orchestrator work, or used as the foundation for the visual dashboard refinement.
 
+---
+
+## MEDIA HUB MASTER PRACTICES (FROM claude/media-hub-app-bsehae BRANCH)
+
+The branch contains a complete media-hub-master skill (`.claude/skills/media-hub-master/`) with hard-won rules for private media libraries. Key practices now recorded here for any platform:
+
+**Core rules:**
+- **Originals are sacred.** Never overwrite, rename, recompress or regenerate a user's file. Derived work is always a new file. Prove with SHA-256 before/after.
+- **Private stays private.** Scan before any commit or publish (`scripts/privacy_scan.py --staged`). Public repos get code + synthetic demos only. Personal builds are delivered as files, never hosted.
+- **Offline first.** Third-party calls (Drive thumbnails, voice, web) are opt-in, off by default.
+- **Honest security.** PIN/screen cover is casual protection, not encryption. Say so.
+- **Neutral organiser.** Treat all personal media the same way. No third-party transformation services or face-matching in shipped code.
+- **Verify, don't claim.** Every fix gets a test that fails before and passes after. Report numbers you saw.
+
+**Merging versions from other AIs:**
+- Hash first; same name ≠ same file. Built pages can be newer than source zips.
+- Recover source from builds with `split_build.py` (lossless proof required).
+- Diff forks against their real base, not against your version. Take improvements, leave private specifics or unverifiable changes, port good ideas with your own tests.
+- Bump version numbers when merging same-numbered releases. Check claims against source of truth (commit exists, run logs match the repo version).
+
+**Publishing:**
+- Check visibility before anything leaves. Assume public until proven otherwise.
+- Privacy scan covers media, catalogs, cloud IDs, device paths, emails, secrets, and custom terms.
+- When a push is refused, keep the commits and offer a `git bundle` so nothing is lost.
+
+**Testing hygiene:**
+- Full suite (`bash tests/run_all.sh`) includes server Range/Host tests, Playwright with CSP enforced, and checklist report.
+- Scan generated code for control characters (`\f` form-feed breaks pages).
+- Write the regression test first; rerun the whole suite after fixes.
+
+These practices apply to the media pipeline (Module C), any digital product packs, and cross-assistant merges. The full skill and scripts remain on the branch for direct use.
+
 *End of master reference. Paste into any AI platform to continue.*

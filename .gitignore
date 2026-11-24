@@ -1,0 +1,13 @@
+# Generated files, local secrets and installed packages never belong in this public repository.
+__pycache__/
+*.pyc
+node_modules/
+.env
+.env.*
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore

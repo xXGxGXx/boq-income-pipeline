@@ -3,6 +3,7 @@
 A private, offline-first media library that behaves like an app. One page of plain HTML/CSS/JS: no accounts, no tracking, no network calls unless you turn something on. Every kind of personal media is treated the same way: nothing is judged, hidden or filtered for its content.
 
 ## Try it in two minutes (synthetic demo)
+Needs Python 3.11+ with Pillow (`pip install pillow`, for the app icons); ffmpeg is optional.
 ```
 python3 tools/make_demo.py build/demo                       # generated pictures, a tone, and clips if ffmpeg is installed
 python3 tools/build.py --catalog build/demo/catalog.json --plan build/demo/media_plan.json --out dist

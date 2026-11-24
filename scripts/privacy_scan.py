@@ -7,6 +7,8 @@
     python3 privacy_scan.py --staged --terms ~/private-terms.txt     # plus your own words (names, titles, categories)
     python3 privacy_scan.py --tracked                      # everything the repository holds now (what a push makes public)
     python3 privacy_scan.py --history                      # every file ever committed on this branch (slow on big repos)
+    python3 privacy_scan.py --tracked --baseline .privacy-baseline   # fail only on findings not already reviewed (for CI)
+    python3 privacy_scan.py --tracked --write-baseline .privacy-baseline   # record today's reviewed findings
 
 Flags, by category
   media      photos, video, audio files (personal media rarely belongs in a repository, never in a public one)
@@ -19,6 +21,8 @@ Flags, by category
   term       any word from --terms (one per line, case-insensitive; keep that file OUTSIDE the repository)
   large      files over --max-mb (default 5)
 A line containing "privacy-scan: ok" is accepted as reviewed; "privacy-scan: ignore-file" in a file's first 5 lines skips it.
+A baseline file lists reviewed findings as "category<TAB>path<TAB>detail" (no line numbers, so edits elsewhere in a file
+don't break it; a changed media file's size changes its entry, so it is reviewed again).
 Matches are shown masked. Exit code 0 = nothing found, 1 = something to review, 2 = bad usage.
 """
 import argparse, fnmatch, os, re, subprocess, sys
@@ -41,7 +45,7 @@ PATTERNS = [
 ]
 DRIVE_ID = re.compile(r"(?<![\w-])1[A-Za-z0-9_-]{24,43}(?![\w-])")
 DRIVE_CONTEXT = re.compile(r"drive|folder|gdoc|google ?doc|docs\.google", re.I)
-EMAIL_OK = re.compile(r"@(?:example\.(?:com|org|net)|[\w.-]+\.invalid|anthropic\.com)$|^(?:noreply|no-reply|git|user|you|name)@", re.I)
+EMAIL_OK = re.compile(r"@(?:(?:[\w-]+\.)*example\.(?:com|org|net)|[\w.-]+\.invalid|anthropic\.com)$|^(?:noreply|no-reply|git|user|you|name)@", re.I)
 
 
 def read_bytes(path):
@@ -142,6 +146,16 @@ def scan(files, terms=(), max_mb=5.0, allow=()):
     return findings
 
 
+def baseline_key(finding):
+    cat, name, _ln, what = finding
+    return "\t".join((cat, name.replace(os.sep, "/"), what))
+
+
+def read_baseline(path):
+    with open(path, encoding="utf-8") as f:
+        return {l.rstrip("\n") for l in f if l.strip() and not l.startswith("#")}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Find private material before committing, pushing or publishing.")
     ap.add_argument("paths", nargs="*"); ap.add_argument("--staged", action="store_true"); ap.add_argument("--history", action="store_true")
@@ -149,6 +163,8 @@ def main(argv=None):
     ap.add_argument("--terms", help="file with one private word or phrase per line (keep it outside the repository)")
     ap.add_argument("--allow", action="append", default=[], help="glob to accept, e.g. --allow 'icons/*.png' (repeatable)")
     ap.add_argument("--max-mb", type=float, default=5.0)
+    ap.add_argument("--baseline", help="file of reviewed findings to accept; only new findings fail")
+    ap.add_argument("--write-baseline", metavar="FILE", help="write every current finding to FILE as reviewed, then exit 0")
     a = ap.parse_args(argv)
     if not (a.paths or a.staged or a.history or a.tracked):
         ap.error("give paths, --staged, --tracked or --history")
@@ -168,6 +184,23 @@ def main(argv=None):
         print("git failed (run inside a repository):", exc, file=sys.stderr); return 2
     files += walk(a.paths)
     found = scan(files, terms, a.max_mb, a.allow)
+    if a.write_baseline:
+        if terms:
+            print("not writing a baseline that includes --terms findings (it would name your private words)", file=sys.stderr); return 2
+        keys = sorted({baseline_key(f) for f in found})
+        with open(a.write_baseline, "w", encoding="utf-8") as f:
+            f.write("# privacy-scan: ignore-file\n# Reviewed findings accepted by privacy_scan.py --baseline (category, path, masked detail).\n"
+                    "# Remove a line when its file is fixed; add lines only after checking that the finding is safe to publish.\n")
+            f.writelines(k + "\n" for k in keys)
+        print("%d finding(s) written to %s" % (len(keys), a.write_baseline)); return 0
+    accepted = 0
+    if a.baseline:
+        try:
+            known = read_baseline(a.baseline)
+        except OSError as exc:
+            print("can't read baseline:", exc, file=sys.stderr); return 2
+        kept = [f for f in found if baseline_key(f) not in known]
+        accepted, found = len(found) - len(kept), kept
     by_cat = {}
     for cat, name, ln, what in found:
         by_cat.setdefault(cat, []).append((name, ln, what))
@@ -177,7 +210,8 @@ def main(argv=None):
             print("   %s%s  %s" % (name, (":%d" % ln) if ln else "", what))
         if len(by_cat[cat]) > 50:
             print("   … %d more" % (len(by_cat[cat]) - 50))
-    print("%d file(s) scanned: %s" % (len(files), ("%d finding(s) to review" % len(found)) if found else "nothing private found"))
+    print("%d file(s) scanned: %s%s" % (len(files), ("%d finding(s) to review" % len(found)) if found else ("nothing new" if a.baseline else "nothing private found"),
+                                        (" (%d already reviewed, in the baseline)" % accepted) if accepted else ""))
     return 1 if found else 0
 
 

@@ -189,10 +189,6 @@ class RunAndReport(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await orch.async_main([str(bad), "--output-dir", str(d)]), 2)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class OpenAIResponses(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         orch.OPENAI_API_KEY = "test-openai-key"
@@ -201,6 +197,14 @@ class OpenAIResponses(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         orch.OPENAI_API_KEY = ""
         orch.OPENAI_MODEL = ""
+
+
+    async def run_one(self, handler, provider="openai", **task):
+        o = orch.Orchestrator(client=mock_client(handler))
+        try:
+            return (await o.run([orch.Task(id="openai-test", prompt="research current sources", provider=provider, **task)]))[0]
+        finally:
+            await o.client.aclose()
 
     async def test_responses_api_uses_store_false_and_opt_in_web_search(self):
         seen = {}
@@ -277,3 +281,7 @@ class OpenAIResponses(unittest.IsolatedAsyncioTestCase):
         r = await self.run_one(lambda req: httpx.Response(200, json=response), provider="openai",
                                context={"data_classification": "financial", "allow_external_processing": True})
         self.assertEqual(r.status, "success")
+
+
+if __name__ == "__main__":
+    unittest.main()

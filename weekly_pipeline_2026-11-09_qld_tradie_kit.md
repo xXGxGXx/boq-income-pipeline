@@ -1,5 +1,5 @@
 # Weekly Income Pipeline Auto-Run – 2026-11-09
-**Owner:** Kyle Beskin-Clark | BoQ BSB 124001 / Acc 20026470  
+**Owner:** repository owner | the owner's payout account (details kept private, never in this repository)  
 **Run type:** Fully automated (minimal/zero human this week)
 
 ## 1. Niche Scoring & Auto-Selection
@@ -119,7 +119,7 @@ Price: $27 AUD (GST handled by Gumroad as Merchant of Record).
 - Keep pure AI prompt/kit products on Gumroad only.  
 - Refresh Payday Super section with any new ATO guidance.  
 - Monitor QBCC Audit Mapper public messaging for additional prompt angles.  
-- Money remains on platform until confirmed transfer to BoQ 124001 / 20026470 under Kyle Beskin-Clark.
+- Money remains on platform until confirmed transfer to the owner's payout account (details kept private, never in this repository).
 
 ---
 *Generated 2026-11-09 09:06 AEST. Legitimate digital product path only.*

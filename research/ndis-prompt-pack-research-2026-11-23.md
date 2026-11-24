@@ -25,7 +25,7 @@
 - NDIS provider prompt-and-template system at $37 AUD (bundle: prompts + workflow doc + templates)
 - Validate with $5 micro-version first
 - Free sample prompt as hook; $5 micro → $37 full → bundle-of-three discount → monthly update tier
-- Payouts to BOQ (BSB 124001 / 20026470) via existing income pipeline
+- Payouts to the owner's bank account via the existing income pipeline (account details are kept private, never in this repository)
 - Title/first line matched to exact buyer search language
 
 ## Next Steps

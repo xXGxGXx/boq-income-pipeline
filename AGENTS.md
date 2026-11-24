@@ -24,7 +24,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 
 ## Privacy
 
-- Never commit personal photos, videos or audio; media catalogs; the owner's email or other personal details; API keys or tokens; private folder links; or paths from the owner's devices.
+- Never commit personal photos, videos or audio; media catalogs; the owner's email or other personal details; **bank details (BSB, account, card or tax file numbers), even in payout notes**; API keys or tokens; private folder links; or paths from the owner's devices. Scheduled jobs that write files here must follow this too.
 - Test with synthetic media only: `python3 media-hub/tools/make_demo.py build/demo`. Never open the owner's private media to check a layout.
 - `.privacy-baseline` lists findings that were reviewed and are safe to publish (test images, an app icon, two owner-only Drive folder IDs). Add a line only after checking that the finding is safe to publish, never to silence a real leak. Private-word lists (`--terms`) stay off the repository.
 - Personal builds of the owner's library go to the owner as files, never as commits or hosted pages.

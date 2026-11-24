@@ -61,6 +61,23 @@ class Privacy(unittest.TestCase):
         code, out = quiet(privacy_scan.main, str(d), "--baseline", str(base))
         self.assertEqual(code, 1); self.assertIn("== email (1)", out); self.assertNotIn("== media", out)
 
+    def test_bank_card_and_tax_numbers(self):
+        d = Path(tempfile.mkdtemp())
+        (d / "pay.md").write_text("Payouts to BoQ BSB 123-456 / Acc 12345678\n"          # all numbers here are made up
+                                  "IBAN GB82 WEST 1234 5698 7654 32\ncard 4111 1111 1111 1111\nTFN: 123 456 782\n")
+        code, out = quiet(privacy_scan.main, str(d))
+        self.assertEqual(code, 1); self.assertIn("== bank (4)", out)
+        self.assertNotIn("12345678", out); self.assertNotIn("4111", out)                  # reports never repeat the number
+        self.assertIn("••78", out)
+
+    def test_numbers_that_are_not_bank_details(self):
+        d = Path(tempfile.mkdtemp())
+        (d / "ok.md").write_text("sha 1d26e8573e39089a126a25b26e62bf61116ab6e6931f9dacfacebea57dd79438\n"
+                                 "version 1.2.3 on 2026-11-24, run 45343803294, ts 1732400000000\n"
+                                 "GitHub account settings; card 4111 1111 1111 1112 (fails Luhn)\n"
+                                 "IBAN GB82 WEST 1234 5698 7654 33 (bad checksum); TFN 123 456 789 (bad checksum)\n")
+        self.assertEqual(quiet(privacy_scan.main, str(d))[0], 0)
+
     def test_baseline_never_records_private_terms(self):
         d = Path(tempfile.mkdtemp()); (d / "a.md").write_text("my Secret Shelf\n")
         terms = d.parent / ("terms-b-%d.txt" % os.getpid()); terms.write_text("secret shelf\n")

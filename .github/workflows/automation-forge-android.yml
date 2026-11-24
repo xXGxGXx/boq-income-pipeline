@@ -1,0 +1,28 @@
+name: Automation Forge Android
+on:
+  pull_request:
+  push:
+    branches: [integration/pr3-clean-main-2026-11-24]
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+      - name: Unit tests and debug APK
+        working-directory: automation-forge
+        run: gradle testDebugUnitTest assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forge-debug-apk
+          path: automation-forge/**/outputs/apk/debug/*.apk
+          if-no-files-found: error

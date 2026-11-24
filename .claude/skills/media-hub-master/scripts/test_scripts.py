@@ -47,6 +47,27 @@ class Privacy(unittest.TestCase):
         d = Path(tempfile.mkdtemp()); (d / "readme.md").write_text("Nothing here but https://example.com/page\n")
         self.assertEqual(quiet(privacy_scan.main, str(d))[0], 0)
 
+    def test_baseline_accepts_reviewed_findings_only(self):
+        d = Path(tempfile.mkdtemp()); (d / "icon.png").write_bytes(b"\x89PNG" + b"x" * 40)
+        (d / "notes.md").write_text("intro\nDrive folder 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA\n")
+        base = d.parent / ("baseline-%d.txt" % os.getpid())
+        self.assertEqual(quiet(privacy_scan.main, str(d), "--write-baseline", str(base))[0], 0)
+        self.assertNotIn("1fd66zXGQpdgOjfjme1", base.read_text())                     # stored masked
+        code, out = quiet(privacy_scan.main, str(d), "--baseline", str(base))
+        self.assertEqual(code, 0, out); self.assertIn("2 already reviewed", out)
+        (d / "notes.md").write_text("new first line\nintro\nDrive folder 1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA\n")  # moved line: still accepted
+        self.assertEqual(quiet(privacy_scan.main, str(d), "--baseline", str(base))[0], 0)
+        (d / "leak.md").write_text("ping a.person@gmail.com\n")                                        # anything new still fails
+        code, out = quiet(privacy_scan.main, str(d), "--baseline", str(base))
+        self.assertEqual(code, 1); self.assertIn("== email (1)", out); self.assertNotIn("== media", out)
+
+    def test_baseline_never_records_private_terms(self):
+        d = Path(tempfile.mkdtemp()); (d / "a.md").write_text("my Secret Shelf\n")
+        terms = d.parent / ("terms-b-%d.txt" % os.getpid()); terms.write_text("secret shelf\n")
+        base = d.parent / ("baseline-t-%d.txt" % os.getpid())
+        self.assertEqual(quiet(privacy_scan.main, str(d), "--terms", str(terms), "--write-baseline", str(base))[0], 2)
+        self.assertFalse(base.exists())
+
 
 class Checksums(unittest.TestCase):
     def test_join_check_only_and_gap(self):

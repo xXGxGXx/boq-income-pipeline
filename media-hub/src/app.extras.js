@@ -106,7 +106,7 @@ function addLinkSheet(pre) {
 
 /* ---------- import a catalog file (TSV / CSV / JSON) into your own layer ---------- */
 function parseTable(text) {
-  text = text.replace(/^﻿/, '');
+  text = text.replace(/^\uFEFF/, '');
   const first = text.split(/\r?\n/, 1)[0], delim = first.split('\t').length > first.split(',').length ? '\t' : ',';
   const rows = []; let row = [], cur = '', q = false;
   for (let i = 0; i < text.length; i++) {

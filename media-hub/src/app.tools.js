@@ -313,7 +313,7 @@ function exportCsv() {
   const head = ['code', 'title', 'kind', 'folder', 'category', 'source', 'resolution', 'tags', 'favourite', 'rating', 'note', 'on_device', 'sha256', 'link'];
   const src = state.tab === 'folders' ? ($('#fgrid')._list || []) : state.list, list = src.length ? src : shown();
   const rows = list.map(i => [i.code, i.title, i.kind, pathOf(homeOf(i)).slice(1).map(p => p.name).join(' / '), i.category, i.source, i.res, tagsOf(i).join(' '), isFav(i.id) ? 1 : '', user.rating[i.id] || '', user.note[i.id] || (isEnc(i.id) ? '[encrypted]' : ''), hasLocal(i) ? 1 : '', i.sha256 || '', i.link || '']);
-  download('media-hub-view-' + today() + '.csv', '﻿' + [head].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
+  download('media-hub-view-' + today() + '.csv', '\uFEFF' + [head].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
   toast('Exported ' + rows.length + ' rows');
 }
 function safeMerge(dst, src) { if (!src || typeof src !== 'object') return 0; let n = 0; Object.keys(src).forEach(k => { if (!UNSAFE_KEYS.has(k)) { dst[k] = src[k]; n++; } }); return n; }

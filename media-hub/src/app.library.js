@@ -742,7 +742,7 @@ function masterPlan(scope) {
     if (byteable) { file = dir + '/' + masterFileName(it); let k = 2; while (used.has(file.toLowerCase())) file = dir + '/' + masterFileName(it).replace(/(\.[^.]+)$/, ' (' + k++ + ')$1'); used.add(file.toLowerCase()); files.push({ it, file }); }
     rows.push([it.code, it.title, it.kind, pathOf(homeOf(it)).slice(1).map(p => p.name).join(' / '), file, it.sha256 || '', it.link || '', it.linked ? 'linked folder (already on disk)' : it.server ? 'phone folder (already on disk)' : '']);
   });
-  const csv = '﻿' + [['code', 'title', 'kind', 'folder', 'file', 'sha256', 'link', 'note']].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n');
+  const csv = '\uFEFF' + [['code', 'title', 'kind', 'folder', 'file', 'sha256', 'link', 'note']].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n');
   return { files, csv, rows };
 }
 function masterSheet(scopeIds) {

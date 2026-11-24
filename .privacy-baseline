@@ -1,0 +1,16 @@
+# privacy-scan: ignore-file
+# Reviewed findings accepted by privacy_scan.py --baseline (category, path, masked detail).
+# Remove a line when its file is fixed; add lines only after checking that the finding is safe to publish.
+catalog	.claude/skills/media-hub-master/evals/public-repo-private-build/files/repo/media-hub/catalog.json	personal catalog or media manifest
+cloud	MASTER-ORCHESTRATOR-REFERENCE.md	Drive ID 1LZa-Xln…YdVo
+cloud	MASTER-ORCHESTRATOR-REFERENCE.md	Drive ID 1fd66zXG…YyHA
+cloud	research/ndis-prompt-pack-research-2026-11-23.md	Drive ID 1LZa-Xln…YdVo
+cloud	research/ndis-prompt-pack-research-2026-11-23.md	Drive ID 1fd66zXG…YyHA
+cloud	skills/drive-checkpoint/SKILL.md	Drive ID 1LZa-Xln…YdVo
+cloud	skills/drive-checkpoint/SKILL.md	Drive ID 1fd66zXG…YyHA
+cloud	skills/tiered-memory-system/integrity-sweep.py	Drive ID 1LZa-Xln…YdVo
+cloud	skills/tiered-memory-system/integrity-sweep.py	Drive ID 1fd66zXG…YyHA
+media	.claude/skills/media-hub-master/evals/public-repo-private-build/files/repo/media-hub/media/IMG_20261003_221145.jpg	.jpg file, 3.9 KB
+media	.claude/skills/media-hub-master/evals/public-repo-private-build/files/repo/media-hub/media/VID_20261004_001502.mp4	.mp4 file, 5.9 KB
+media	artifacts/test-red-square.png	.png file, 0.2 KB
+media	automation-forge/app/src/main/res/drawable/forge_icon.png	.png file, 2.2 KB

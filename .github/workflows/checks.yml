@@ -1,0 +1,101 @@
+# Runs on every push and pull request, whichever assistant or person made it.
+# A red cross on a commit means one of these found a real problem; the job log says which file and why.
+name: checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity:
+    name: Integrity and privacy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Broken files (unexpanded $(cat ...), truncated key docs, conflict markers, hidden characters, syntax)
+        run: python3 scripts/check_repo.py
+      - name: Privacy scan (fails only on findings not already reviewed in .privacy-baseline)
+        run: python3 scripts/privacy_scan.py --tracked --baseline .privacy-baseline
+      - name: Tests for the checker and the scanner
+        run: |
+          python3 scripts/test_check_repo.py
+          python3 .claude/skills/media-hub-master/scripts/test_scripts.py
+
+  python:
+    name: Orchestrators and Media Hub (unit and server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install ffmpeg and test libraries
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install --quiet httpx requests pytest
+      - name: orchestrator/
+        run: python3 -m unittest orchestrator/test_orchestrator.py
+      - name: artifacts/ orchestrator
+        run: python3 artifacts/test_orchestrator.py
+      - name: Media Hub unit and server tests (synthetic demo media only)
+        working-directory: media-hub
+        run: |
+          python3 tools/make_demo.py build/demo
+          python3 tools/build.py --catalog build/demo/catalog.json --plan build/demo/media_plan.json --out dist
+          python3 -m unittest tests/test_range.py tests/test_optimize.py tests/test_library.py tests/test_checksums.py
+          python3 -m pytest -q -p no:cacheprovider tests/test_media_serve.py
+
+  browser:
+    name: Media Hub in a real browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Install ffmpeg, pytest and Playwright (Node and Python, each with its own Chromium)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          python3 -m pip install --quiet pytest playwright
+          python3 -m playwright install --with-deps chromium
+          npm install --no-save --no-audit --no-fund --prefix media-hub playwright
+          npx --prefix media-hub playwright install chromium
+      - name: Every Media Hub suite (unit, server, 46 browser tests, 40-point checklist)
+        run: bash media-hub/tests/run_all.sh
+
+  forge:
+    name: Automation Forge (Android build and unit tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: "8.14.3"
+      - name: Unit tests and a debug build
+        working-directory: automation-forge
+        run: gradle --no-daemon testDebugUnitTest assembleDebug

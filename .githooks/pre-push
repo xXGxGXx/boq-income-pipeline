@@ -1,0 +1,33 @@
+#!/bin/bash
+# pre-push hook: run privacy scan and gitleaks before allowing push
+# Install: cp .githooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Privacy scan — fail-closed
+if [ -f scripts/privacy_scan.py ]; then
+  echo "Running privacy_scan.py..."
+  python3 scripts/privacy_scan.py --tracked --baseline .privacy-baseline || {
+    echo "ERROR: privacy_scan.py found violations. Fix before pushing."
+    exit 1
+  }
+  echo "privacy_scan.py: clean"
+fi
+
+# Gitleaks — fast regex gate
+if command -v gitleaks &>/dev/null; then
+  echo "Running gitleaks..."
+  gitleaks detect --config .gitleaks.toml --source . --verbose --exit-code 1 || {
+    echo "ERROR: gitleaks found potential secrets. Fix before pushing."
+    exit 1
+  }
+  echo "gitleaks: clean"
+else
+  echo "WARNING: gitleaks not installed — skipping. Install: https://github.com/gitleaks/gitleaks#install"
+fi
+
+echo "All pre-push checks passed."
+exit 0

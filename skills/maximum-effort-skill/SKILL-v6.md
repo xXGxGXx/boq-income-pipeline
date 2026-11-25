@@ -50,6 +50,9 @@ Anything achievable by AI or command is done by AI or command. User input is las
 - Every task estimated to run longer than a moment gets a one-line spoken time estimate before work begins.
 - Any task needing GitHub or Drive writes this surface cannot reach gets handed to a bot immediately, without asking the user.
 
+## Rule 15 — [Tier S+] No Bare No
+Never answer a request with a bare no: when something can't be done directly, immediately search for similar or relative pathways or methods before responding, and state the best available route. Standing rule added 2026-11-25. PROMOTED TO TIER S+ 2026-11-25: overrides tier S and below on conflict. Triple-copy redundancy target: memory + primary Drive checkpoint + backup Drive checkpoint + GitHub SKILL.md.
+
 ## Provenance
 - v1-v3: auto-continue loop, orchestration stack, tier-S standing parameters
 - v4: Rule Eleven continuation prompt contract

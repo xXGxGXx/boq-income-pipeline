@@ -248,7 +248,7 @@ def main(argv=None):
     ap.add_argument("--allow", action="append", default=[], help="glob to accept, e.g. --allow 'icons/*.png' (repeatable)")
     ap.add_argument("--max-mb", type=float, default=5.0)
     ap.add_argument("--baseline", help="file of reviewed findings to accept; only new findings fail")
-    ap.add_argument("--write-baseline", metavars="FILE", help="write every current finding to FILE as reviewed, then exit 0")
+    ap.add_argument("--write-baseline", help="write every current finding to FILE as reviewed, then exit 0")
     a = ap.parse_args(argv)
     if not (a.paths or a.staged or a.history or a.tracked):
         ap.error("give paths, --staged, --tracked or --history")

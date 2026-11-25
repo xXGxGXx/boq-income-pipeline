@@ -14,7 +14,7 @@ class PayoutExclusion(unittest.TestCase):
         payout = d / "00 - Handover Protocol" / "Payout & Receiving Details"
         payout.mkdir(parents=True)
         (payout / "RECEIVING-ACCOUNT.md").write_text(
-            "BSB 124-001 / account 20026470\n", encoding="utf-8")
+            "BSB 000-000 / account 00000000\n", encoding="utf-8")
         code, out = run(str(payout))
         self.assertEqual(code, 0, out)
         self.assertIn("KNOWN_POSITIVE", out)
@@ -26,7 +26,7 @@ class PayoutExclusion(unittest.TestCase):
         other = d / "research"
         other.mkdir()
         (other / "notes.md").write_text(
-            "BSB 124-001 / account 20026470\n", encoding="utf-8")
+            "BSB 000-000 / account 00000000\n", encoding="utf-8")
         code, out = run(str(other))
         self.assertEqual(code, 1, out)
         self.assertIn("== bank", out)
@@ -40,7 +40,8 @@ def run(*argv):
     out, err = io.StringIO(), io.StringIO()
     with redirect_stdout(out), redirect_stderr(err):
         code = ps.main(list(argv))
-    return code, out.getvalue() + err.getvalue()
+    out.seek(0); err.seek(0)
+    return code, out.read() + err.read()
 
 
 if __name__ == "__main__":

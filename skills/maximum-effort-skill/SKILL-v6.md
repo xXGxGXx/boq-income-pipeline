@@ -46,6 +46,10 @@ Every contribution file opens with a mandatory header: turn code (T-NNN), platfo
 ## Rule 13: Zero-Manual-Input Mandate (Reinforced)
 Anything achievable by AI or command is done by AI or command. User input is last resort only. This rule overrides convenience.
 
+## Rule 14 — Time Estimates and Bot Handoff
+- Every task estimated to run longer than a moment gets a one-line spoken time estimate before work begins.
+- Any task needing GitHub or Drive writes this surface cannot reach gets handed to a bot immediately, without asking the user.
+
 ## Provenance
 - v1-v3: auto-continue loop, orchestration stack, tier-S standing parameters
 - v4: Rule Eleven continuation prompt contract

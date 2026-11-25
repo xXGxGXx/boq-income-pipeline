@@ -47,7 +47,7 @@ PATTERNS = [
     ("cloud", re.compile(r"https?://(?:drive|docs|photos)\.google\.com/[^\s\"'<>)]*(?:/d/|/folders/|[?&]id=|/share/)[\w-]{10,}", re.I)),
     ("cloud", re.compile(r"https?://photos\.app\.goo\.gl/[\w-]+|https?://(?:www\.)?dropbox\.com/(?:s|scl|sh)/[\w/-]+|https?://1drv\.ms/[\w/!-]+|"
                          r"https?://onedrive\.live\.com/[^\s\"'<>]+|https?://(?:www\.)?icloud\.com/(?:share|photos|iclouddrive)/[^\s\"'<>]+|https?://mega\.nz/[^\s\"'<>]+", re.I)),
-    ("device", re.compile(r"/storage/emulated/\d+/[^\s\"'<>]*|content://[\w.]+/[^\s\"'<>]+|/sdcard/[^\s\"'<>]+|/data/data/com\.termux/files/home/[^\s\"'<>]+|"
+    ("device", re.compile(r"/storage/emulated/\d+/[^\s\"'<>]*|content://[\w.]+/[^\s\"'<>]+|/sdcard/[^\s\"'<>]+|/data/data/com\.termux/files/home/[^\s\"'<>]*|"
                           r"[A-Za-z]:\\Users\\(?!Public\\|Default\\)[\w .-]+\\[^\s\"'<>]*|/Users/(?!Shared/)[\w.-]+/[^\s\"'<>]*")),
     ("email", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
     ("secret", re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xai-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|"

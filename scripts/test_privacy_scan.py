@@ -40,7 +40,8 @@ def run(*argv):
     out, err = io.StringIO(), io.StringIO()
     with redirect_stdout(out), redirect_stderr(err):
         code = ps.main(list(argv))
-    return code, out.getenv() + err.getenv() if False else out.getvalue() + err.getenv()
+    out.seek(0); err.seek(0)
+    return code, out.read() + err.read()
 
 
 if __name__ == "__main__":

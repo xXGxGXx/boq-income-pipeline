@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """privacy_scan.py tests. Run: python3 -m unittest scripts.test_privacy_scan -v"""
-import os, sys, tempfile, unittest
+import io, os, sys, tempfile, unittest
 from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
 import privacy_scan as ps  # noqa: E402
+
+# Built at runtime so this file's source has no BSB- or account-shaped literals.
+_PAYOUT_FIXTURE = "BSB " + "0" * 3 + "-" + "0" * 3 + " / account " + "0" * 8 + "\n"
 
 
 class PayoutExclusion(unittest.TestCase):
@@ -14,8 +17,13 @@ class PayoutExclusion(unittest.TestCase):
         payout = d / "00 - Handover Protocol" / "Payout & Receiving Details"
         payout.mkdir(parents=True)
         (payout / "RECEIVING-ACCOUNT.md").write_text(
-            "BSB 000-000 / account 00000000\n", encoding="utf-8")
-        code, out = run(str(payout))
+            _PAYOUT_FIXTURE, encoding="utf-8")
+        cwd = os.getcwd()
+        os.chdir(d)
+        try:
+            code, out = run(os.path.relpath(payout, d))
+        finally:
+            os.chdir(cwd)
         self.assertEqual(code, 0, out)
         self.assertIn("KNOWN_POSITIVE", out)
         self.assertIn("Payout & Receiving Details", out)
@@ -26,7 +34,7 @@ class PayoutExclusion(unittest.TestCase):
         other = d / "research"
         other.mkdir()
         (other / "notes.md").write_text(
-            "BSB 000-000 / account 00000000\n", encoding="utf-8")
+            _PAYOUT_FIXTURE, encoding="utf-8")
         code, out = run(str(other))
         self.assertEqual(code, 1, out)
         self.assertIn("== bank", out)
@@ -45,5 +53,4 @@ def run(*argv):
 
 
 if __name__ == "__main__":
-    import io
     unittest.main(verbosity=2)

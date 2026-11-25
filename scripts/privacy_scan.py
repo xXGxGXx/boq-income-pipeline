@@ -33,13 +33,22 @@ MEDIA_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".avif"
              ".mp4", ".m4v", ".mov", ".webm", ".mkv", ".avi", ".3gp", ".wmv", ".flv", ".ts", ".mts",
              ".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".amr"}
 CATALOG_NAMES = {"catalog.json", "media_plan.json", "media-manifest.json", "playable-report.json", "media_catalog.tsv", "manifest.json"}
+
+# Named exclusion: payout receiving details (BSB + account, deposits only)
+# Authorized per AUTHORIZATION-v2.md in 00 - Handover Protocol/Payout & Receiving Details/
+# Opt-in access only; every access logged in MERGE-LOG with one-line reason.
+# Scanner reports these as KNOWN_POSITIVE (acknowledged, not hidden) so the signal stays loud for real leaks.
+PAYOUT_EXCLUSION_PATHS = [
+    "00 - Handover Protocol/Payout & Receiving Details/",
+]
+
 TEXT_EXT_SKIP = MEDIA_EXT | {".zip", ".gz", ".7z", ".rar", ".pdf", ".xlsx", ".docx", ".pptx", ".woff", ".woff2", ".ttf", ".ico", ".pyc", ".bin", ".bundle"}
 PATTERNS = [
     ("cloud", re.compile(r"https?://(?:drive|docs|photos)\.google\.com/[^\s\"'<>)]*(?:/d/|/folders/|[?&]id=|/share/)[\w-]{10,}", re.I)),
     ("cloud", re.compile(r"https?://photos\.app\.goo\.gl/[\w-]+|https?://(?:www\.)?dropbox\.com/(?:s|scl|sh)/[\w/-]+|https?://1drv\.ms/[\w/!-]+|"
                          r"https?://onedrive\.live\.com/[^\s\"'<>]+|https?://(?:www\.)?icloud\.com/(?:share|photos|iclouddrive)/[^\s\"'<>]+|https?://mega\.nz/[^\s\"'<>]+", re.I)),
     ("device", re.compile(r"/storage/emulated/\d+/[^\s\"'<>]*|content://[\w.]+/[^\s\"'<>]+|/sdcard/[^\s\"'<>]+|/data/data/com\.termux/files/home/[^\s\"'<>]+|"
-                          r"[A-Za-z]:\\Users\\(?!Public\\|Default\\)[\w .-]+\\[^\s\"'<>]*|/Users/(?!Shared/)[\w.-]+/[^\s\"'<>]+")),
+                          r"[A-Za-z]:\\Users\\(?!Public\\|Default\\)[\w .-]+\\[^\s\"'<>]*|/Users/(?!Shared/)[\w.-]+/[^\s\"'<>]*")),
     ("email", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
     ("secret", re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xai-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|"
                           r"AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[abpr]-[A-Za-z0-9-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
@@ -166,11 +175,21 @@ def walk(paths):
     return out
 
 
+def _is_payout_excluded(name):
+    """True when path matches a named payout exclusion (normalized to forward slashes)."""
+    norm = name.replace(os.sep, "/")
+    return any(norm.startswith(ex.rstrip("/")) or norm.startswith(ex) for ex in PAYOUT_EXCLUSION_PATHS)
+
+
 def scan(files, terms=(), max_mb=5.0, allow=()):
     findings = []
+    known_positives = []
     term_res = [(t, re.compile(r"(?<![A-Za-z0-9])" + re.escape(t) + r"(?![A-Za-z0-9])", re.I)) for t in terms if t]
     for name, read in files:
         if any(fnmatch.fnmatch(name, g) or fnmatch.fnmatch(name, "*/" + g) or fnmatch.fnmatch(os.path.basename(name), g) for g in allow):
+            continue
+        if _is_payout_excluded(name):
+            known_positives.append(name)
             continue
         base, ext = os.path.basename(name).lower(), os.path.splitext(name)[1].lower()
         try:
@@ -208,7 +227,7 @@ def scan(files, terms=(), max_mb=5.0, allow=()):
             for t, rx in term_res:
                 if rx.search(line):
                     findings.append(("term", name, ln, "matches one of your private terms (%s)" % mask(t)))
-    return findings
+    return findings, known_positives
 
 
 def baseline_key(finding):
@@ -229,7 +248,7 @@ def main(argv=None):
     ap.add_argument("--allow", action="append", default=[], help="glob to accept, e.g. --allow 'icons/*.png' (repeatable)")
     ap.add_argument("--max-mb", type=float, default=5.0)
     ap.add_argument("--baseline", help="file of reviewed findings to accept; only new findings fail")
-    ap.add_argument("--write-baseline", metavar="FILE", help="write every current finding to FILE as reviewed, then exit 0")
+    ap.add_argument("--write-baseline", metaf="FILE", help="write every current finding to FILE as reviewed, then exit 0")
     a = ap.parse_args(argv)
     if not (a.paths or a.staged or a.history or a.tracked):
         ap.error("give paths, --staged, --tracked or --history")
@@ -248,7 +267,9 @@ def main(argv=None):
     except (OSError, subprocess.CalledProcessError) as exc:
         print("git failed (run inside a repository):", exc, file=sys.stderr); return 2
     files += walk(a.paths)
-    found = scan(files, terms, a.max_mb, a.allow)
+    found, known_positives = scan(files, terms, a.max_mb, a.allow)
+    for kp in known_positives:
+        print("KNOWN_POSITIVE  %s  (payout receiving details — authorized exclusion, not a leak)" % kp)
     if a.write_baseline:
         if terms:
             print("not writing a baseline that includes --terms findings (it would name your private words)", file=sys.stderr); return 2

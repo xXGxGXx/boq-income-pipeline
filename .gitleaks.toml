@@ -1,0 +1,32 @@
+# Gitleaks v8.25+ config for boq-income-pipeline
+# Dual-gate: fast pre-commit gate alongside custom privacy_scan.py
+
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''scripts/test_privacy_scan.py''',
+  '''.privacy-baseline''',
+  '''**/node_modules/**''',
+]
+descriptions = [
+  'Synthetic test fixtures use BSB 000-000 / account 00000000 — zero real credentials. Baseline entries carry reason+owner+expiry per OWASP guidance.',
+]
+
+[[rules]]
+id = "bsb-account-pattern"
+description = "BSB + account number pattern (Australian banking)"
+regex = '''(?i)bsb[:\s]*\d{3}[-\s]?\d{3}[^\d].{0,40}account[:\s]*\d{6,10}'''
+keywords = ["bsb", "account"]
+
+[[rules]]
+id = "bsb-standalone"
+description = "Standalone BSB pattern"
+regex = '''\b\d{3}-\d{3}\b'''
+keywords = ["bsb"]
+
+[report]
+format = "sarif"
+reportPath = "gitleaks-report.sarif"
+exitCode = 1

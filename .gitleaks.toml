@@ -1,0 +1,51 @@
+title = "boq-income-pipeline gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Scoped allowlist with documented reasons and expiry dates per OWASP/Gitleaks guidance"
+paths = [
+  '''scripts/test_privacy_scan.py''',
+  '''.privacy-baseline''',
+  '''Research Findings/''',
+  '''ndis research/''',
+  '''skills/drive-checkpoint/''',
+  '''integrity-sweep.py''',
+  '''media/''',
+]
+regexes = [
+  '''(?i)bsb[:\s]*000[-\s]*000''',
+  '''(?i)account[:\s]*00000000''',
+  '''1[A-Za-z0-9_-]{24,43}''',
+]
+
+[[allowlists]]
+regexTarget = "match"
+regexes = [
+  '''test_''',
+  '''fixture''',
+  '''example''',
+  '''placeholder''',
+  '''dummy''',
+  '''fake''',
+  '''mock''',
+  '''sample''',
+]
+description = "Test/fixture keywords — low-risk synthetic patterns"
+expiry = "2027-02-25"
+
+[[allowlists]]
+regexTarget = "line"
+regexes = [
+  '''# gitleaks:allow''',
+]
+description = "Inline allow markers for intentional exceptions"
+expiry = "2027-02-25"
+
+[rules]
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = ['"""bsb"""']
+  description = "BSB-like numeric patterns have low entropy; numeric false positives"
+  expiry = "2027-02-25"

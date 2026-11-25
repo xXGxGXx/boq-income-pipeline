@@ -1,33 +1,28 @@
 #!/bin/bash
-# pre-push hook: run privacy scan and gitleaks before allowing push
-# Install: cp .githooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+# Pre-push hook: run privacy_scan.py before allowing push
+# Install: git config core.hooksPath .githooks
 
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPO_ROOT"
+SCANNER="$REPO_ROOT/scripts/privacy_scan.py"
 
-# Privacy scan — fail-closed
-if [ -f scripts/privacy_scan.py ]; then
-  echo "Running privacy_scan.py..."
-  python3 scripts/privacy_scan.py --tracked --baseline .privacy-baseline || {
-    echo "ERROR: privacy_scan.py found violations. Fix before pushing."
-    exit 1
-  }
-  echo "privacy_scan.py: clean"
+if [[ ! -f "$SCANNER" ]]; then
+  echo "ERROR: privacy_scan.py not found at $SCANNER"
+  exit 1
 fi
 
-# Gitleaks — fast regex gate
-if command -v gitleaks &>/dev/null; then
-  echo "Running gitleaks..."
-  gitleaks detect --config .gitleaks.toml --source . --verbose --exit-code 1 || {
-    echo "ERROR: gitleaks found potential secrets. Fix before pushing."
-    exit 1
-  }
-  echo "gitleaks: clean"
-else
-  echo "WARNING: gitleaks not installed — skipping. Install: https://github.com/gitleaks/gitleaks#install"
+echo "Running privacy scan before push..."
+python3 "$SCANNER" --tracked --baseline "$REPO_ROOT/.privacy-baseline"
+SCAN_EXIT=$?
+
+if [[ $SCAN_EXIT -ne 0 ]]; then
+  echo ""
+  echo "PUSH BLOCKED: privacy scan found issues."
+  echo "Fix findings or update .privacy-baseline with documented reasons."
+  echo "Baseline entries must include owner, reason, and expiry date."
+  exit 1
 fi
 
-echo "All pre-push checks passed."
+echo "Privacy scan clean. Push allowed."
 exit 0

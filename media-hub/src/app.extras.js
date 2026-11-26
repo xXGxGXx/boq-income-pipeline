@@ -253,5 +253,18 @@ function downloadKit() {
   if (!names.length) return toast('The companion kit is part of the single-file version');
   const files = names.map(n => ({ name: 'media-hub-kit/' + n, data: enc.encode(KIT[n]), exec: /\.sh$/.test(n) }));
   files.push({ name: 'media-hub-kit/catalog.json', data: enc.encode(JSON.stringify(CAT, null, 1)) });
-  download('media-hub-companion-kit.zip', makeZip(files)); toast('Kit saved: ' + files.length + ' files. Unzip it next to this file.');
+  download('media-hub-companion-kit.zip', makeZip(files)); toast('Kit saved: ' + files.length + ' files. Unzip it next to this file (on a phone: open it in Files and choose Extract).');
+}
+/* Phones can't preview a .zip, so every kit file can also be read, copied or saved on its own, right here. */
+function viewKit() {
+  const names = Object.keys(KIT).sort();
+  if (!names.length) return toast('The companion kit is part of the single-file version');
+  openSheet(`<h2>Companion kit</h2><p style="color:var(--muted);margin:2px 0 10px;font-size:.86rem">Open a file to read it, copy it (for example into Termux), or save just that file. To unpack the whole kit on a phone, download the zip, open it in the Files app and choose Extract.</p>
+    <div class="kitlist">${names.map((n, i) => `<details class="kitfile" data-i="${i}"><summary><b>${esc(n)}</b> <span class="kitsize">${fmtBytes(KIT[n].length)}</span></summary>
+      <div class="row kitbtns"><button class="btn" data-kcopy="${i}">Copy</button><button class="btn" data-ksave="${i}">Save this file</button></div><pre class="kitpre"></pre></details>`).join('')}</div>
+    <div style="margin-top:12px"><button class="btn primary" id="kvZip">Download all (.zip)</button></div>`);
+  $$('#sheetBody .kitfile').forEach(d => d.addEventListener('toggle', () => { const pre = $('.kitpre', d); if (d.open && !pre.textContent) pre.textContent = KIT[names[+d.dataset.i]]; }));
+  $$('#sheetBody [data-kcopy]').forEach(b => b.onclick = () => { const n = names[+b.dataset.kcopy]; copyText(KIT[n]).then(ok => toast(ok ? 'Copied ' + n.split('/').pop() : 'Copy failed: open the file and long-press the text')); });
+  $$('#sheetBody [data-ksave]').forEach(b => b.onclick = () => { const n = names[+b.dataset.ksave]; download(n.split('/').pop(), KIT[n], 'text/plain'); });
+  $('#kvZip').onclick = downloadKit;
 }

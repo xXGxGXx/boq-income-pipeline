@@ -532,7 +532,7 @@ function bindApp() {
   $('#restorePick').onchange = e => { const f = e.target.files[0]; if (f) restoreBackup(f).finally(() => { e.target.value = ''; }); };
   $('#btnSelfTest').onclick = selfTest; $('#btnCopyDiag').onclick = copyDiagnostics;
   bindNotesCard(); $('#btnRpNow').onclick = async () => { const rp = await makeRestorePoint('Saved by you', { force: true }); toast(rp ? 'Restore point saved' : 'Could not save a restore point here'); renderRestoreCard(); };
-  $('#btnKit').onclick = downloadKit;
+  $('#btnKit').onclick = downloadKit; $('#btnKitView').onclick = viewKit;
   $('#btnLinkDir').onclick = () => linkFolder(); $('#btnServerLib').onclick = () => loadServerLibrary(false).then(ok => { if (ok) { renderTools(); } });
   $('#btnMaster').onclick = () => masterSheet(); $('#btnWhere').onclick = whereSheet;
   $('#btnProfile').onclick = () => profileSheet(() => renderTools()); $('#btnOpenShared').onclick = () => openFolder('shared'); $('#btnPack').onclick = exportSharePack; $('#btnImportPack').onclick = () => $('#packPick').click();

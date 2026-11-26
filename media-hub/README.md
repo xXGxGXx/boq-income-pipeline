@@ -15,7 +15,7 @@ The demo holds no real photos or personal data. Build your own library with `bui
 This folder holds the **app only**. Your media, catalog and builds stay on your devices: `media/`, `build/`, `dist/`, `mirror/`, `private/`, `*.zip` and catalog files are git-ignored here, so they can't be committed by accident. Never push a personal build to a public repository or a hosted page.
 
 ## Three ways to run it
-1. **Open `media-hub-standalone.html`**: the one combined app. Your on-device pictures and clips, the whole catalog, and a **companion kit** (server, playable-copy tool, master-folder tool, Tasker player, Termux start, rebuild scripts and source) are all inside it; Tools → *Download companion kit* unpacks them as a zip. Works from a file, no install.
+1. **Open `media-hub-standalone.html`**: the one combined app. Your on-device pictures and clips, the whole catalog, and a **companion kit** (server, playable-copy tool, master-folder tool, Tasker player, Termux start, rebuild scripts and source) are all inside it; Tools → *View kit files* opens, copies or saves any one of them (phones can't preview a zip), and *Download companion kit* saves them all as a zip. Works from a file, no install.
 2. **Folder + local server (installable, with your phone folders)**: `python3 tools/media_serve.py --dir . --open --library ~/Pictures --library ~/Movies`, then Install from the browser menu.
    On the phone (Termux, after `termux-setup-storage`): `bash termux/start-media-hub.sh`. It shares DCIM, Pictures, Movies, Music, Downloads and `Media Hub Library` **read-only**; they appear under Folders › Sources › Phone folders. `bash termux/install-widget-shortcut.sh` adds a home-screen button.
 3. Host the folder over https on a private server you control; it is static.

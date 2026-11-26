@@ -51,6 +51,7 @@ class Loading(unittest.TestCase):
         self.assertEqual(r("what is trending on reddit and in the news today"), "grok")
         self.assertEqual(r("storyboard and visual design for a campaign"), "muse")
         self.assertEqual(r("hello"), "grok")
+        self.assertEqual(orch.Task(id="x", prompt="research", task_type="openai").resolved_provider(), "openai")
 
     def test_bad_files_are_refused_clearly(self):
         for data, msg in (([{"id": "a"}], "prompt"), ([{"prompt": "p", "provider": "gpt"}], "provider"),
@@ -186,6 +187,100 @@ class RunAndReport(unittest.IsolatedAsyncioTestCase):
     async def test_cli_exit_codes(self):
         d = Path(tempfile.mkdtemp()); bad = d / "bad.json"; bad.write_text("{not json")
         self.assertEqual(await orch.async_main([str(bad), "--output-dir", str(d)]), 2)
+
+
+class OpenAIResponses(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        orch.OPENAI_API_KEY = "test-openai-key"
+        orch.OPENAI_MODEL = "test-responses-model"
+
+    async def asyncTearDown(self):
+        orch.OPENAI_API_KEY = ""
+        orch.OPENAI_MODEL = ""
+
+
+    async def run_one(self, handler, provider="openai", **task):
+        o = orch.Orchestrator(client=mock_client(handler))
+        try:
+            return (await o.run([orch.Task(id="openai-test", prompt="research current sources", provider=provider, **task)]))[0]
+        finally:
+            await o.client.aclose()
+
+    async def test_responses_api_uses_store_false_and_opt_in_web_search(self):
+        seen = {}
+        response = {
+            "id": "resp_test",
+            "model": "test-responses-model",
+            "output": [{
+                "type": "message",
+                "role": "assistant",
+                "content": [{
+                    "type": "output_text",
+                    "text": "A sourced answer.",
+                    "annotations": [{
+                        "type": "url_citation",
+                        "url": "https://example.org/source",
+                        "title": "Example source"
+                    }]
+                }]
+            }],
+            "usage": {"input_tokens": 12, "output_tokens": 7}
+        }
+
+        def handler(req):
+            seen["url"] = str(req.url)
+            seen["auth"] = req.headers.get("authorization")
+            seen["payload"] = json.loads(req.content)
+            return httpx.Response(200, json=response)
+
+        r = await self.run_one(handler, provider="openai", context={"web_search": True, "reasoning_effort": "high"})
+        self.assertEqual(r.status, "success")
+        self.assertEqual(r.output, "A sourced answer.")
+        self.assertEqual((r.input_tokens, r.output_tokens), (12, 7))
+        self.assertEqual(seen["url"], orch.OPENAI_API_URL)
+        self.assertEqual(seen["auth"], "Bearer test-openai-key")
+        self.assertIs(seen["payload"]["store"], False)
+        self.assertEqual(seen["payload"]["tools"], [{"type": "web_search"}])
+        self.assertEqual(seen["payload"]["reasoning"], {"effort": "high"})
+        self.assertEqual(r.metadata["response_id"], "resp_test")
+        self.assertEqual(r.metadata["citations"], [{"url": "https://example.org/source", "title": "Example source"}])
+
+    async def test_web_search_is_not_enabled_by_default(self):
+        seen = {}
+        response = {"id": "resp_text", "model": "test-responses-model",
+                    "output": [{"type": "message", "content": [{"type": "output_text", "text": "Plain answer."}]}]}
+        def handler(req):
+            seen["payload"] = json.loads(req.content)
+            return httpx.Response(200, json=response)
+        r = await self.run_one(handler, provider="openai")
+        self.assertEqual(r.status, "success")
+        self.assertNotIn("tools", seen["payload"])
+        self.assertIs(seen["payload"]["store"], False)
+
+    async def test_missing_key_or_model_fails_without_request(self):
+        orch.OPENAI_API_KEY = ""
+        r = await self.run_one(lambda req: self.fail("network must not be called"), provider="openai")
+        self.assertEqual(r.status, "failed")
+        self.assertIn("OPENAI_API_KEY", r.error)
+        orch.OPENAI_API_KEY = "key"
+        orch.OPENAI_MODEL = ""
+        r = await self.run_one(lambda req: self.fail("network must not be called"), provider="openai")
+        self.assertEqual(r.status, "failed")
+        self.assertIn("OPENAI_MODEL", r.error)
+
+    async def test_restricted_classification_is_blocked_before_any_provider(self):
+        def forbidden(req):
+            raise AssertionError("no external provider request should be made")
+        r = await self.run_one(forbidden, provider="openai", context={"data_classification": "financial"})
+        self.assertEqual(r.status, "failed")
+        self.assertIn("explicit allow_external_processing=true", r.error)
+
+    async def test_explicit_external_processing_override_is_recordable(self):
+        response = {"id": "resp_override", "model": "test-responses-model",
+                    "output": [{"type": "message", "content": [{"type": "output_text", "text": "Approved."}]}]}
+        r = await self.run_one(lambda req: httpx.Response(200, json=response), provider="openai",
+                               context={"data_classification": "financial", "allow_external_processing": True})
+        self.assertEqual(r.status, "success")
 
 
 if __name__ == "__main__":

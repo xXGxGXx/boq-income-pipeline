@@ -21,14 +21,27 @@ jobs:
     name: Integrity and privacy
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      media_hub: ${{ steps.diff.outputs.media_hub }}
+      forge: ${{ steps.diff.outputs.forge }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5.1.0
         with:
           fetch-depth: 0   # full history, so the secret scan sees every commit, not just the latest
-      - uses: actions/setup-python@v6
+      # The browser and Android jobs take most of the minutes, so they run only when their code (or the workflow)
+      # changed, and only after this job passes. A private repository on GitHub Free gets 2,000 Actions minutes a
+      # month, billed per job and rounded up to whole minutes. Actions > checks > Run workflow forces every job.
+      - name: Which slow jobs this commit needs
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: bash .github/workflows/changed-areas.sh
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6.3.0
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444   # v5.0.0
         with:
           node-version: "22"
       - name: Libraries the release builder needs (Media Hub icons, NDIS Word and Excel files)
@@ -56,8 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6.3.0
         with:
           python-version: "3.12"
       - name: Install ffmpeg, Pillow and test libraries
@@ -76,40 +89,18 @@ jobs:
           python3 -m unittest tests/test_range.py tests/test_optimize.py tests/test_library.py tests/test_checksums.py
           python3 -m pytest -q -p no:cacheprovider tests/test_media_serve.py
 
-  # The browser and Android jobs take most of the minutes, so they run only when their code (or this workflow)
-  # changed. A private repository on GitHub Free gets 2,000 Actions minutes a month; running everything on every
-  # commit would use more than that at the current pace. Run the workflow by hand (Actions > checks > Run workflow)
-  # to force every job.
-  changes:
-    name: What changed
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      media_hub: ${{ steps.diff.outputs.media_hub }}
-      forge: ${{ steps.diff.outputs.forge }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - id: diff
-        env:
-          EVENT: ${{ github.event_name }}
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PUSH_BEFORE: ${{ github.event.before }}
-        run: bash .github/workflows/changed-areas.sh
-
   browser:
     name: Media Hub in a real browser
-    needs: changes
-    if: needs.changes.outputs.media_hub == 'true'
+    needs: integrity
+    if: needs.integrity.outputs.media_hub == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6.3.0
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444   # v5.0.0
         with:
           node-version: "22"
       - name: Install ffmpeg, Pillow, pytest and Playwright (Node and Python, each with its own Chromium)
@@ -124,24 +115,24 @@ jobs:
 
   forge:
     name: Automation Forge (Android build and unit tests)
-    needs: changes
-    if: needs.changes.outputs.forge == 'true'
+    needs: integrity
+    if: needs.integrity.outputs.forge == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5.1.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961   # v5.7.0
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@v5        # also checks the wrapper files against Gradle's published checksums
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c   # v5.0.2; also checks the Gradle wrapper's checksums
       - name: Unit tests and a debug build
         working-directory: automation-forge
         # Maven Central sometimes answers "429 Too Many Requests"; wait and retry instead of failing the build.
         run: ./gradlew --no-daemon -Dorg.gradle.internal.repository.max.retries=8 -Dorg.gradle.internal.repository.initial.backoff=2000 testDebugUnitTest assembleDebug
       - name: Keep the debug APK and test reports (download them from this run's Artifacts section)
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4   # v5.0.0
         with:
           name: automation-forge-debug
           path: |

@@ -198,6 +198,19 @@ async function blurKey(page, key) { await page.evaluate(() => document.activeEle
     await sp.waitForFunction(() => /Done at/.test(document.querySelector('#diagLog').textContent), null, { timeout: 15000 });
     const sdiag = await sp.$eval('#diagLog', e => e.innerText);
     ok(!/✗/.test(sdiag), 'single-file self-test: embedded media match their hashes' + (/✗/.test(sdiag) ? '\n      ' + sdiag.split('\n').filter(l => /✗/.test(l)).join('\n      ') : ''));
+    // Companion kit viewer: phones can't preview the kit zip, so each file opens, copies and saves on its own
+    const kitNames = await sp.evaluate(() => Object.keys(JSON.parse(document.querySelector('#kit').textContent || '{}')).sort());
+    await sp.click('#btnKitView'); await sp.waitForSelector('#sheet.open'); await sleep(450);   // let the sheet finish sliding up
+    ok(kitNames.length > 0 && await sp.$$eval('#sheetBody .kitfile', d => d.length) === kitNames.length, 'kit viewer lists every kit file (' + kitNames.length + ')');
+    await sp.click('#sheetBody .kitfile[data-i="0"] summary');
+    await sp.waitForFunction(() => document.querySelector('#sheetBody .kitfile[data-i="0"] .kitpre').textContent.length > 0, null, { timeout: 5000 }).catch(() => {});
+    const kitText = await sp.$eval('#sheetBody .kitfile[data-i="0"] .kitpre', e => e.textContent);
+    const kitWant = await sp.evaluate(n => JSON.parse(document.querySelector('#kit').textContent)[n], kitNames[0]);
+    ok(kitText.length > 0 && kitText === kitWant, 'opening a kit file shows its exact text (' + kitNames[0] + ')');
+    const [kitDl] = await Promise.all([sp.waitForEvent('download'), sp.click('#sheetBody [data-ksave="0"]')]);
+    ok(kitDl.suggestedFilename() === kitNames[0].split('/').pop(), 'Save this file downloads just that file (' + kitDl.suggestedFilename() + ')');
+    await sp.click('#scrim', { position: { x: 8, y: 8 } }); await sleep(350);   // top-left: the sheet covers the scrim's centre
+    ok(!await sp.$('#sheet.open'), 'tapping outside closes the kit viewer');
     await sdone(); await sctx.close();
   } catch (e) { failures++; console.log('  ✗ crashed: ' + (e.stack || e)); }
   finally { await browser.close(); srv.kill(); fs.rmSync(lib, { recursive: true, force: true }); }

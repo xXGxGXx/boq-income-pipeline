@@ -12,8 +12,9 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
    python3 scripts/privacy_scan.py --staged   # private material in what you're committing
    ```
 2. Run the tests for what you changed (see [Tests](#tests)) and report the exact numbers you saw.
-3. Every pull request and every push to `main` runs the same checks on GitHub (`.github/workflows/checks.yml`). A red cross on a commit means something broke: open the failed job, fix the file it names, and push again. Don't leave it red. The Media Hub browser job and the Forge build run only when `media-hub/`, the media-hub-master skill, `automation-forge/` or the workflow changed (a skipped job is normal); Actions > checks > Run workflow runs everything.
+3. Every pull request and every push to `main` runs the same checks on GitHub (`.github/workflows/checks.yml`). A red cross on a commit means something broke: open the failed job, fix the file it names, and push again. Don't leave it red. The Media Hub browser job and the Forge build run only after the integrity job passes, and only when `media-hub/`, the media-hub-master skill, `automation-forge/` or the workflow changed (a skipped job is normal); Actions > checks > Run workflow runs everything.
 4. Fetch `main` first. Someone else may have changed the file since you last read it.
+5. Don't merge your own change to the privacy scanner, `.privacy-baseline`, `.gitleaks.toml`, `.githooks/`, `.github/workflows/` or this file without the owner's explicit OK, even when every check is green.
 
 ## Writing files through an API, connector or app
 

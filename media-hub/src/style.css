@@ -470,3 +470,9 @@ body.feeding .toast{bottom:calc(110px + var(--safe-b))}
 }
 
 .viewer:focus,.sheet:focus,.feed:focus{outline:none}
+/* companion kit viewer */
+.kitfile{border:1px solid var(--line);border-radius:var(--radius-sm);margin:6px 0;background:var(--surface)}
+.kitfile summary{cursor:pointer;padding:10px 12px;min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;overflow-wrap:anywhere}
+.kitsize{color:var(--muted);font-size:.8rem}
+.kitbtns{display:flex;padding:0 12px 8px;gap:8px;flex-wrap:wrap}
+.kitpre{margin:0;padding:10px 12px;max-height:50vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.78rem;line-height:1.45;background:var(--surface2);border-top:1px solid var(--line);border-radius:0 0 var(--radius-sm) var(--radius-sm)}

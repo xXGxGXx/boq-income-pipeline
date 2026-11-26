@@ -129,9 +129,13 @@ def part_number(path):
 
 
 def join(pattern, out=None, expect=None, parts_manifest=None):
-    parts = [p for p in glob.glob(pattern) if os.path.isfile(p)]
-    if not parts:
+    matched = glob.glob(pattern)
+    if not matched:
         raise ValueError("no files match %r" % pattern)
+    unsafe = [p for p in matched if os.path.islink(p) or not os.path.isfile(p)]
+    if unsafe:
+        raise ValueError("split parts must be regular non-symlink files: %s" % ", ".join(os.path.basename(p) for p in unsafe))
+    parts = matched
     nums = [part_number(p) for p in parts]
     if None in nums:
         raise ValueError("every part needs a number in its name: %s" % parts[nums.index(None)])
@@ -141,7 +145,26 @@ def join(pattern, out=None, expect=None, parts_manifest=None):
         raise ValueError("parts are not a complete run: missing %s" % (gaps[:10] or "none, but numbers repeat"))
     part_sums = {}
     if parts_manifest:
-        part_sums = {os.path.basename(e["name"]): e["sha256"] for e in parse_manifest(parts_manifest)}
+        entries = parse_manifest(parts_manifest)
+        for entry in entries:
+            safe_name = safe_rel(entry["name"])
+            if safe_name is None:
+                raise ValueError("unsafe path in parts manifest: %s" % entry["name"])
+            basename = os.path.basename(safe_name)
+            if basename in part_sums:
+                raise ValueError("duplicate part checksum entry: %s" % basename)
+            part_sums[basename] = entry["sha256"]
+        expected_names = {os.path.basename(p) for p in parts}
+        listed_names = set(part_sums)
+        missing = sorted(expected_names - listed_names)
+        unexpected = sorted(listed_names - expected_names)
+        if missing or unexpected:
+            details = []
+            if missing:
+                details.append("missing: " + ", ".join(missing[:10]))
+            if unexpected:
+                details.append("unexpected: " + ", ".join(unexpected[:10]))
+            raise ValueError("parts manifest must list every input part exactly once (" + "; ".join(details) + ")")
     if out and os.path.exists(out):
         raise ValueError("%s already exists; it is never overwritten" % out)
     whole, bad_parts, total = hashlib.sha256(), [], 0

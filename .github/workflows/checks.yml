@@ -76,8 +76,32 @@ jobs:
           python3 -m unittest tests/test_range.py tests/test_optimize.py tests/test_library.py tests/test_checksums.py
           python3 -m pytest -q -p no:cacheprovider tests/test_media_serve.py
 
+  # The browser and Android jobs take most of the minutes, so they run only when their code (or this workflow)
+  # changed. A private repository on GitHub Free gets 2,000 Actions minutes a month; running everything on every
+  # commit would use more than that at the current pace. Run the workflow by hand (Actions > checks > Run workflow)
+  # to force every job.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      media_hub: ${{ steps.diff.outputs.media_hub }}
+      forge: ${{ steps.diff.outputs.forge }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: bash .github/workflows/changed-areas.sh
+
   browser:
     name: Media Hub in a real browser
+    needs: changes
+    if: needs.changes.outputs.media_hub == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -100,6 +124,8 @@ jobs:
 
   forge:
     name: Automation Forge (Android build and unit tests)
+    needs: changes
+    if: needs.changes.outputs.forge == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

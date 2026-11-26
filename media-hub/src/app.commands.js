@@ -116,6 +116,7 @@ const CMD_RULES = [
   [/^encrypt (?:this|the|that) note$|^(?:make|keep) (?:this|the) note (?:private|secret|encrypted)$/, () => ({ t: 'tool', v: 'nvthis' })],
   [/^(?:where are my files|where is (?:my|the) library|where(?:'s| is) everything|library location|show (?:me )?(?:the |my )?(?:library )?location|storage|show (?:me )?(?:the )?storage|where do my files live)$/, () => ({ t: 'tool', v: 'where' })],
   [/^(?:download (?:the )?(?:companion )?kit|get (?:the )?kit)$/, () => ({ t: 'tool', v: 'kit' })],
+  [/^(?:view|show|open|browse)(?: me)? (?:the )?(?:companion )?kit(?: files)?$/, () => ({ t: 'tool', v: 'kitview' })],
   [/^(?:search|look up|find)(?: on)? (?:the )?(?:web|internet|online)(?: for)? (.+)$|^(?:google|bing|web search|search online for|search the web for) (.+)$/, m => ({ t: 'web', v: m[1] || m[2] })],
   [/^(?:shuffle|surprise me|random|something random|anything|play something|play anything|surprise|feeling lucky|i'm feeling lucky|roll the dice)$/, () => ({ t: 'shuffle' })],
   [/^(?:scroll|start scrolling|scroll mode|feed|swipe|reels?(?: mode)?|tiktok mode)$/, () => ({ t: 'scroll' })],
@@ -248,7 +249,7 @@ function describe(c) {
     case 'select': return c.all ? 'Select all' : 'Select';
     case 'savesearch': return 'Save this search' + (c.v ? ' as “' + c.v + '”' : '');
     case 'add': return { files: 'Add photos, videos or audio', folder: 'Add a whole folder (copy)', link: 'Link a folder (read in place)', camera: 'Camera', url: 'Save a link', paste: 'Paste', catalog: 'Import a catalog file', server: 'Load phone folders' }[c.v];
-    case 'tool': return { verify: 'Verify originals', dupes: 'Find duplicates', backup: 'Export backup', selftest: 'Run self-test', copydiag: 'Copy diagnostics (no titles or notes)', rpnow: 'Make a restore point', rplist: 'Restore points', nvlock: 'Lock encrypted notes', nvunlock: 'Unlock encrypted notes', nvall: 'Encrypt all notes', nvthis: 'Encrypt this note', where: 'Where are my files?', kit: 'Download the companion kit' }[c.v];
+    case 'tool': return { verify: 'Verify originals', dupes: 'Find duplicates', backup: 'Export backup', selftest: 'Run self-test', copydiag: 'Copy diagnostics (no titles or notes)', rpnow: 'Make a restore point', rplist: 'Restore points', nvlock: 'Lock encrypted notes', nvunlock: 'Unlock encrypted notes', nvall: 'Encrypt all notes', nvthis: 'Encrypt this note', where: 'Where are my files?', kit: 'Download the companion kit', kitview: 'Show the companion kit files' }[c.v];
     case 'web': return 'Search the web for “' + c.v + '”';
     case 'profile': return c.v ? 'Your Shared name: ' + c.v : 'Choose your Shared name';
     case 'folder': return 'Open ' + pathOf(c.f).slice(1).map(p => p.name).join(' › ');
@@ -401,6 +402,7 @@ function execCmd(c, raw, from) {
       if (c.v === 'backup') { exportBackup(); return ''; }
       if (c.v === 'selftest') { leaveOverlays(); setTab('tools'); selfTest(); return 'Running the self-test'; }
       if (c.v === 'kit') { downloadKit(); return ''; }
+      if (c.v === 'kitview') { leaveOverlays(); viewKit(); return ''; }
       if (c.v === 'copydiag') { copyDiagnostics(); return ''; }
       if (c.v === 'rpnow') { makeRestorePoint('Saved by you', { force: true }).then(rp => toast(rp ? 'Restore point saved' : 'Could not save a restore point here')); return ''; }
       if (c.v === 'rplist') { leaveOverlays(); setTab('tools'); setTimeout(() => { const e = $('#cardRestore'); if (e) e.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); return from === 'voice' ? 'Here are your restore points' : ''; }

@@ -59,7 +59,7 @@ def ndis_office_files():
 
 PRODUCTS = {
     "privacy-integrity-toolkit": {
-        "version": "1.0.0", "date": (2026, 11, 24),
+        "version": "1.1.0", "date": (2026, 11, 26),
         "files": [
             ("scripts/privacy_scan.py", "privacy_scan.py"),
             ("scripts/check_repo.py", "check_repo.py"),
@@ -124,8 +124,7 @@ def expand(product):
 
 def privacy_findings(entries, allow=()):
     files = [(name, (lambda data=data: data)) for name, data in entries]
-    found, _known = privacy_scan.scan(files, max_mb=20, allow=allow)
-    return found
+    return privacy_scan.scan(files, max_mb=20, allow=allow)
 
 
 def build_zip(name, product):

@@ -1,7 +1,7 @@
 # Gumroad Listing: Privacy and Integrity Toolkit
 
 **Price:** A$19 (one-time)
-**Files to upload:** `privacy-integrity-toolkit-1.0.0.zip` from `python3 products/build_releases.py --out release-out privacy-integrity-toolkit`
+**Files to upload:** `privacy-integrity-toolkit-1.1.0.zip` from `python3 products/build_releases.py --out release-out privacy-integrity-toolkit`
 **Catalogue place:** Standalone SKU between the A$5 Micro-Pack and the A$49 Governance Bundle
 **Category:** Software Development > Developer Tools
 **Tags:** Python, privacy, checksums, local server audit, stdlib, AI builders, no-install
@@ -21,7 +21,7 @@ Five no-install, stdlib-only Python tools. Find keys, bank details and private l
 AI builders and solo operators who ship scripts, local tools, or single-file web apps — and need a pre-publish check that does not require a package install.
 
 ### What's inside
-Five Python 3 tools plus 23 tests. Standard library only: no pip. Run them with `python3`.
+Five Python 3 tools plus 25 tests. Standard library only: no pip. Run them with `python3`.
 
 **privacy_scan.py:** finds private material before you commit, push or publish.
 - Scans paths, or git's `--staged`, `--tracked` or `--history` files.
@@ -34,6 +34,7 @@ Five Python 3 tools plus 23 tests. Standard library only: no pip. Run them with 
 - Merge-conflict leftovers.
 - Invisible and bidirectional characters ("Trojan Source").
 - Python, JSON, shell and JavaScript syntax errors.
+- Release zips, app builds, signing keys and `.env` files that should never be committed.
 - Key documents that were truncated.
 
 **verify_checksums.py:** checks files against sha256sum, BSD or JSON checksum lists, and checks or rebuilds split archives (`--join`). Check-only mode writes nothing, and an existing output file is never overwritten.

@@ -9,9 +9,9 @@
 - BREVITY MANDATE [2026-11-26]: Max work silently, minimal verbal output, key points only. No reading out full links letter by letter.
 
 ## Platform Prompt Docs (v9 masters, then merged to single-file masters)
-- ChatGPT MASTER (free-tier scoped): https://docs.google.com/document/d/1oZUPy5na99Rxt7o9lAEZCRJ0-s7NRRDvh8wBgaAoDjs
-- Claude MASTER (basic-Code scoped): https://docs.google.com/document/d/1w4vAVZK0rYlaTd2Lj8DPiE_w1NX5Xr08ENIy6xuFajY
-- Folder: AI Continuation Prompts 2026-11-26 (14CwSeRxWpAAUSQvlUOiCkNIOtDWn_U6S)
+- ChatGPT MASTER (free-tier scoped): Google Doc [redacted — link in Drive-side copy]
+- Claude MASTER (basic-Code scoped): Google Doc [redacted — link in Drive-side copy]
+- Folder: AI Continuation Prompts 2026-11-26 ([redacted — folder ID in Drive-side copy])
 - Both masters: single-file, copy-paste ready, report-back block, live SHA pinned (60c75b7), free/basic scoping only.
 - v1-v8 iterations trashed; only masters remain.
 

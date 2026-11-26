@@ -2,7 +2,11 @@
 
 **Created:** 2026-11-26
 **Automation:** vercel-hourly-sweep (Automations, hourly, Australia/Brisbane, notifications off)
-**Team:** team_Et3tuByDa2vmsDxEIqge5WFR (kylebesk1-7661)
+**Team:** the owner's Vercel team. Its ID and slug stay in the automation's own settings, not in this public repository (the slug contains part of the owner's email address).
+
+## Risk: read before relying on this
+
+Stripping `ssoProtection` and `passwordProtection` makes **every** deployment of **every** project on the team public to anyone who has or guesses the URL, including preview builds of unfinished work, and any project created later. Deployment URLs are predictable from the project name. Prefer a list of named projects that are meant to be public, and leave protection on for the rest. A project that holds private data (Media Hub builds, catalogs, anything behind a token) must never be in the sweep.
 
 ## Why this exists
 

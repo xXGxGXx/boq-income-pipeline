@@ -10,7 +10,7 @@ NEVER report a file, folder, or artifact as created, populated, or complete with
 
 Rule: every completion statement requires (1) the write/create call, (2) an immediate verification read of the destination, (3) spoken confirmation only after the read matches. Applies to Drive folders, GitHub files/branches, Vercel deploys, and any external state.
 
-Origin: 2026-11-25 incident — Research Findings folder 1_qfRAeUxK287P5j2h3bUy5qvsoVyIBfA was reported populated; fresh list showed empty; files had landed in Drive root. User flagged as unacceptable.
+Origin: 2026-11-25 incident — Research Findings Drive folder [redacted] was reported populated; fresh list showed empty; files had landed in Drive root. User flagged as unacceptable.
 
 ### NEVER-BARE-NO RULE [PROMOTED TO TIER S+ 2026-11-25]
 When something can't be done directly, immediately search for similar or relative pathways or methods before responding, and state the best available route. Never end on a bare "no" or "not connected" — always offer the route. Triple-copy redundancy target: memory + primary Drive checkpoint + backup Drive checkpoint + GitHub SKILL.md.
@@ -30,4 +30,4 @@ NEVER cite a file's content, line numbers, or status from a branch or cached rea
 Maximize autonomous execution at all times; batch all independent GitHub/Drive/memory actions in one turn; never hand off compare links or forms as the primary path when API alternatives exist; if a GitHub step is unavoidable, mention it once at the end as a single clean note; use API-based PR creation, check polling, and squash-merge where tools allow; character-level read-back verification mandatory on every file write before confirmation spoken.
 
 ### FOUR-COPY REDUNDANCY
-memory + primary Drive (1fd66zXGQpdgOjfjme1-XDYNZ_-0kYyHA) + backup Drive (1LZa-XlnsM5E5cfFaFKsGozMpoC4rYdVo) + GitHub SKILL.md. Search for TIER-S-OVERRIDE-ACTIVE across all four to verify integrity.
+memory + primary Drive ([redacted — primary Ara Memory Backups folder]) + backup Drive ([redacted — backup Ara Memory Backups folder]) + GitHub SKILL.md. Search for TIER-S-OVERRIDE-ACTIVE across all four to verify integrity.

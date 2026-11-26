@@ -20,6 +20,7 @@ Flags, by category
   secret     API keys and tokens (Anthropic, OpenAI, xAI, GitHub, AWS, Google, Slack), private keys, bearer tokens
   bank       bank details: BSB and account numbers, IBANs (checksum-checked), payment card numbers (Luhn-checked) and
              Australian tax file numbers (checksum-checked); shown with all but the last 2 digits hidden
+  payout     any file inside a "Payout & Receiving Details" folder, wherever it sits; always fails (see NEVER_PUBLISH_DIRS)
   term       any word from --terms (one per line, case-insensitive; keep that file OUTSIDE the repository)
   large      files over --max-mb (default 5)
 A line containing "privacy-scan: ok" is accepted as reviewed; "privacy-scan: ignore-file" in a file's first 5 lines skips it.
@@ -33,13 +34,20 @@ MEDIA_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".avif"
              ".mp4", ".m4v", ".mov", ".webm", ".mkv", ".avi", ".3gp", ".wmv", ".flv", ".ts", ".mts",
              ".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus", ".amr"}
 CATALOG_NAMES = {"catalog.json", "media_plan.json", "media-manifest.json", "playable-report.json", "media_catalog.tsv", "manifest.json"}
+
+# Folders that hold payout receiving details (BSB + account). They live in the owner's Drive and must never be
+# published, so a file inside one is ALWAYS a finding: it fails closed. --allow, "privacy-scan: ok", an ignore-file
+# header and --baseline cannot accept it, and --write-baseline refuses to record it. Matched on any folder name in
+# the path, case-insensitive, so absolute, relative and repo paths all count.
+NEVER_PUBLISH_DIRS = {"payout & receiving details"}
+
 TEXT_EXT_SKIP = MEDIA_EXT | {".zip", ".gz", ".7z", ".rar", ".pdf", ".xlsx", ".docx", ".pptx", ".woff", ".woff2", ".ttf", ".ico", ".pyc", ".bin", ".bundle"}
 PATTERNS = [
     ("cloud", re.compile(r"https?://(?:drive|docs|photos)\.google\.com/[^\s\"'<>)]*(?:/d/|/folders/|[?&]id=|/share/)[\w-]{10,}", re.I)),
     ("cloud", re.compile(r"https?://photos\.app\.goo\.gl/[\w-]+|https?://(?:www\.)?dropbox\.com/(?:s|scl|sh)/[\w/-]+|https?://1drv\.ms/[\w/!-]+|"
                          r"https?://onedrive\.live\.com/[^\s\"'<>]+|https?://(?:www\.)?icloud\.com/(?:share|photos|iclouddrive)/[^\s\"'<>]+|https?://mega\.nz/[^\s\"'<>]+", re.I)),
-    ("device", re.compile(r"/storage/emulated/\d+/[^\s\"'<>]*|content://[\w.]+/[^\s\"'<>]+|/sdcard/[^\s\"'<>]+|/data/data/com\.termux/files/home/[^\s\"'<>]+|"
-                          r"[A-Za-z]:\\Users\\(?!Public\\|Default\\)[\w .-]+\\[^\s\"'<>]*|/Users/(?!Shared/)[\w.-]+/[^\s\"'<>]+")),
+    ("device", re.compile(r"/storage/emulated/\d+/[^\s\"'<>]*|content://[\w.]+/[^\s\"'<>]+|/sdcard/[^\s\"'<>]+|/data/data/com\.termux/files/home/[^\s\"'<>]*|"
+                          r"[A-Za-z]:\\Users\\(?!Public\\|Default\\)[\w .-]+\\[^\s\"'<>]*|/Users/(?!Shared/)[\w.-]+/[^\s\"'<>]*")),
     ("email", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
     ("secret", re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xai-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|"
                           r"AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[abpr]-[A-Za-z0-9-]{10,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
@@ -166,11 +174,19 @@ def walk(paths):
     return out
 
 
+def in_never_publish_dir(name):
+    """True when any folder in the path is a payout-details folder (see NEVER_PUBLISH_DIRS)."""
+    parts = re.split(r"[\\/]+", name)[:-1]
+    return any(p.strip().lower() in NEVER_PUBLISH_DIRS for p in parts)
+
+
 def scan(files, terms=(), max_mb=5.0, allow=()):
     findings = []
     term_res = [(t, re.compile(r"(?<![A-Za-z0-9])" + re.escape(t) + r"(?![A-Za-z0-9])", re.I)) for t in terms if t]
     for name, read in files:
-        if any(fnmatch.fnmatch(name, g) or fnmatch.fnmatch(name, "*/" + g) or fnmatch.fnmatch(os.path.basename(name), g) for g in allow):
+        if in_never_publish_dir(name):
+            findings.append(("payout", name, 0, "payout receiving details folder: never publish (cannot be allowed or baselined)"))
+        elif any(fnmatch.fnmatch(name, g) or fnmatch.fnmatch(name, "*/" + g) or fnmatch.fnmatch(os.path.basename(name), g) for g in allow):
             continue
         base, ext = os.path.basename(name).lower(), os.path.splitext(name)[1].lower()
         try:
@@ -252,6 +268,8 @@ def main(argv=None):
     if a.write_baseline:
         if terms:
             print("not writing a baseline that includes --terms findings (it would name your private words)", file=sys.stderr); return 2
+        if any(f[0] == "payout" for f in found):
+            print("not writing a baseline: payout receiving details can't be accepted; remove those files first", file=sys.stderr); return 2
         keys = sorted({baseline_key(f) for f in found})
         with open(a.write_baseline, "w", encoding="utf-8") as f:
             f.write("# privacy-scan: ignore-file\n# Reviewed findings accepted by privacy_scan.py --baseline (category, path, masked detail).\n"
@@ -264,7 +282,7 @@ def main(argv=None):
             known = read_baseline(a.baseline)
         except OSError as exc:
             print("can't read baseline:", exc, file=sys.stderr); return 2
-        kept = [f for f in found if baseline_key(f) not in known]
+        kept = [f for f in found if f[0] == "payout" or baseline_key(f) not in known]
         accepted, found = len(found) - len(kept), kept
     by_cat = {}
     for cat, name, ln, what in found:

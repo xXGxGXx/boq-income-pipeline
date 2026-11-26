@@ -1,51 +1,18 @@
-title = "boq-income-pipeline gitleaks config"
+# Gitleaks config (tested with Gitleaks 8.28.0; CI pins that release by checksum).
+#
+# Gitleaks looks for secrets: API keys, tokens and private keys. Bank details, Drive links and IDs, device paths,
+# emails and media are scripts/privacy_scan.py's job, so this file does not try to cover them.
+#
+# There is deliberately no allowlist. On 2026-11-26 the default rules found nothing in the working tree or in
+# main's history, so there is nothing to allow. Rules for adding one later:
+#   - Prefer an inline `gitleaks:allow` comment on the one line that is a reviewed false positive.
+#   - Otherwise allow one exact file path, with a comment saying who reviewed it, when, and why.
+#   - Never allow a folder, a keyword, or a pattern such as a Drive ID: an unanchored pattern also matches inside
+#     real tokens. The previous config's Drive-ID pattern hid a synthetic GitHub token in testing.
+#   - Gitleaks has no expiry field; put a review date in the comment instead.
+#   - Use only [[allowlists]]; Gitleaks 8.25+ refuses to load a config that also has the old [allowlist] table.
+
+title = "boq-income-pipeline"
 
 [extend]
 useDefault = true
-
-[allowlist]
-description = "Scoped allowlist with documented reasons and expiry dates per OWASP/Gitleaks guidance"
-paths = [
-  '''scripts/test_privacy_scan.py''',
-  '''.privacy-baseline''',
-  '''Research Findings/''',
-  '''ndis research/''',
-  '''skills/drive-checkpoint/''',
-  '''integrity-sweep.py''',
-  '''media/''',
-]
-regexes = [
-  '''(?i)bsb[:\s]*000[-\s]*000''',
-  '''(?i)account[:\s]*00000000''',
-  '''1[A-Za-z0-9_-]{24,43}''',
-]
-
-[[allowlists]]
-regexTarget = "match"
-regexes = [
-  '''test_''',
-  '''fixture''',
-  '''example''',
-  '''placeholder''',
-  '''dummy''',
-  '''fake''',
-  '''mock''',
-  '''sample''',
-]
-description = "Test/fixture keywords — low-risk synthetic patterns"
-expiry = "2027-02-25"
-
-[[allowlists]]
-regexTarget = "line"
-regexes = [
-  '''# gitleaks:allow''',
-]
-description = "Inline allow markers for intentional exceptions"
-expiry = "2027-02-25"
-
-[rules]
-  [[rules.allowlists]]
-  regexTarget = "match"
-  regexes = ['"""bsb"""']
-  description = "BSB-like numeric patterns have low entropy; numeric false positives"
-  expiry = "2027-02-25"

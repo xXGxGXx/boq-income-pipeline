@@ -98,6 +98,21 @@ class CheckRepo(unittest.TestCase):
         self.write(dict(GOOD, **{".check-repo.json": '{"min_bytes": {"README.md": "lots"}}'}))
         self.assertEqual(self.run_check()[0], 2)
 
+    def test_never_commit_files_are_caught_without_a_gitignore(self):   # e.g. a PR that deletes the release-out/ rule
+        self.write(dict(GOOD, **{"release-out/Toolkit-1.0.zip": b"PK\x03\x04 zip", "app/release.jks": b"\x00key",
+                                 "automation-forge/app-debug.apk": b"PK", ".env": "KEY=x\n", "local.properties": "sdk.dir=/x\n"}))
+        code, out = self.run_check()
+        self.assertEqual(code, 1, out)
+        self.assertIn("== generated (5)", out)
+        self.assertIn("release-out/Toolkit-1.0.zip  buyer zip", out)
+        self.assertIn("signing keystore", out)
+
+    def test_lookalikes_are_not_generated_files(self):
+        self.write(dict(GOOD, **{".env.example": "KEY=\n", "build.gradle.kts": "plugins {}\n", "docs/release-out.md": "notes\n",
+                                 "automation-forge/app/build.gradle.kts": "android {}\n"}))
+        code, out = self.run_check()
+        self.assertEqual(code, 0, out)
+
     def test_checks_a_commit_without_checking_it_out(self):
         self.write(dict(GOOD, **{"MASTER-ORCHESTRATOR-REFERENCE.md": "$(cat /tmp/m.md)"}))
         subprocess.run(["git", "commit", "-qm", "broken"], check=True)

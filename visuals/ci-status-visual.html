@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOQ Income Pipeline — CI Status</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  h1 { font-size: 28px; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .sub { color: #8b949e; font-size: 14px; margin-bottom: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; max-width: 800px; width: 100%; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.2s; }
+  .card:hover { transform: translateY(-2px); border-color: #58a6ff; }
+  .card .icon { font-size: 32px; margin-bottom: 8px; }
+  .card .label { font-size: 13px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
+  .card .status { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .green { color: #3fb950; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .footer { margin-top: 32px; font-size: 12px; color: #484f58; }
+</style>
+</head>
+<body>
+  <h1>BOQ Income Pipeline</h1>
+  <div class="sub">CI Status Dashboard · November 25, 2026</div>
+  <div class="grid">
+    <div class="card"><div class="icon">🔍</div><div class="label">Scanner</div><div class="status green pulse">PASS</div></div>
+    <div class="card"><div class="icon">🧪</div><div class="label">Tests</div><div class="status green pulse">PASS</div></div>
+    <div class="card"><div class="icon">🔨</div><div class="label">Build</div><div class="status green pulse">PASS</div></div>
+    <div class="card"><div class="icon">🚀</div><div class="label">Deploy</div><div class="status green pulse">PASS</div></div>
+  </div>
+  <div class="footer">Run 44 · First fully green CI since scanner loop began · All four jobs passed</div>
+</body>
+</html>

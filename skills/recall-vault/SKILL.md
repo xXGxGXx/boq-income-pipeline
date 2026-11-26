@@ -7,22 +7,22 @@ Operate a local, offline-first catalog without moving, renaming, rewriting, or d
 Shelf may search, star, retag, import metadata, and back up catalog metadata. These operations must not relocate or rewrite original media. Keep source references as references. Never infer a missing file from a poster, thumbnail, preview, or playable.
 
 ## Bench: integrity and relationship checks
-Run \`python tools/recall_vault_check.py <catalog.json>\` before and after metadata changes. The checker reads the catalog only; \`--report\` writes a separate new report and never overwrites.
+Run `python tools/recall_vault_check.py <catalog.json>` before and after metadata changes. The checker reads the catalog only; `--report` writes a separate new report and never overwrites.
 
 A child code's parent is derived by removing **only the final hyphen-separated segment**:
-- \`M1001-poster\` → \`M1001\`
-- \`M1001-playable\` → \`M1001\`
-- \`AI-M2001-poster\` → \`AI-M2001\`, **not** \`AI\`
+- `M1001-poster` → `M1001`
+- `M1001-playable` → `M1001`
+- `AI-M2001-poster` → `AI-M2001`, **not** `AI`
 
-The child suffix must match its role (\`-poster\` or \`-playable\`). The exact derived parent must exist exactly once as a non-child record. A poster alone never covers or replaces the original. Do not guess or silently repair a missing parent; report it for review.
+The child suffix must match its role (`-poster` or `-playable`). The exact derived parent must exist exactly once as a non-child record. A poster alone never covers or replaces the original. Do not guess or silently repair a missing parent; report it for review.
 
-Missing client links are warnings by default. Use \`--strict-links\` to make them blocking errors.
+Missing client links are warnings by default. Use `--strict-links` to make them blocking errors.
 
 ## Blueprint: folders only
-Run \`python tools/create_blueprint.py <target> --dry-run\` to preview the empty folder map, or add \`--create\` to create directories. It creates directories only: no sample files, media copies, moves, or overwrites. Existing files in any target path component cause a safe refusal.
+Run `python tools/create_blueprint.py <target> --dry-run` to preview the empty folder map, or add `--create` to create directories. It creates directories only: no sample files, media copies, moves, or overwrites. Existing files in any target path component cause a safe refusal.
 
 ## Privacy boundary
-- Keep personal catalogs, original filenames, media paths, client records, share links, manifests, archive-part names, and tokens in a local \`private/\` directory ignored by Git.
+- Keep personal catalogs, original filenames, media paths, client records, share links, manifests, archive-part names, and tokens in a local `private/` directory ignored by Git.
 - Do not put private catalogs, client identifiers, original filenames, source links, or tokens in public commits, PRs, issues, tests, or AI prompts.
 - An optional metadata bridge stays within the local machine/network boundary. Store its token in the OS credential store or an environment variable; never paste it into chat, a repository, report, or task file.
 - Do not send client records, financial details, private media, or raw personal catalogs to hosted model providers. Use synthetic examples for AI-assisted tooling.
@@ -38,7 +38,7 @@ Run \`python tools/create_blueprint.py <target> --dry-run\` to preview the empty
 7. Report uncertainty. Never invent a missing path or client link.
 
 ## Synthetic catalog example
-\`\`\`json
+```json
 {
   "version": 1,
   "items": [
@@ -50,5 +50,5 @@ Run \`python tools/create_blueprint.py <target> --dry-run\` to preview the empty
     {"code": "CLIENT-001", "role": "client", "link": null}
   ]
 }
-\`\`\`
+```
 This is synthetic documentation data only. Never copy real client records into this skill package.

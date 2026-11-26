@@ -44,7 +44,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 | Path | What it is |
 |---|---|
 | `media-hub/` | Media Hub: a private, offline-first media library web app with a loopback-only server. `README.md` inside explains it. |
-| `orchestrator/` | The tested multi-model orchestrator (Claude Code CLI, xAI, Muse) |
+| `orchestrator/` | The tested multi-model orchestrator (Claude Code CLI, xAI, Muse, OpenAI), with preflight, risk and budget gates and a verifiable evidence ledger (`--verify`) |
 | `artifacts/orchestrator.py` | A second, older orchestrator (duplicates `orchestrator/`) |
 | `automation-forge/` | Automation Forge 4.2.1, an Android app in Kotlin, with webhook steps switched off. Debug builds only; not yet tested on a phone. Every check run builds it and keeps the APK as a download. |
 | `MASTER-ORCHESTRATOR-REFERENCE.md` | Design for the voice-first Android stack, about 29.5 KB. If you see a one-line file, it's broken: restore it from git history. |
@@ -75,3 +75,4 @@ These are names only. Their values belong in environment variables or the app's 
 - `MUSE_API_URL` and `MUSE_API_KEY`
 - `OPENAI_API_KEY` and `BOX_MCP_TOKEN` (Box agent suite, kept outside this repository)
 - `MEDIA_HUB_TOKEN`
+- `ORCHESTRATOR_EVIDENCE_KEY` (signs orchestrator evidence)

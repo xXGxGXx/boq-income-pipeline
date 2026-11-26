@@ -124,8 +124,7 @@ def expand(product):
 
 def privacy_findings(entries, allow=()):
     files = [(name, (lambda data=data: data)) for name, data in entries]
-    found, _known = privacy_scan.scan(files, max_mb=20, allow=allow)
-    return found
+    return privacy_scan.scan(files, max_mb=20, allow=allow)
 
 
 def build_zip(name, product):

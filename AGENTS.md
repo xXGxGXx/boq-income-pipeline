@@ -26,6 +26,8 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 
 - Never commit personal photos, videos or audio; media catalogs; the owner's email or other personal details; **bank details (BSB, account, card or tax file numbers), even in payout notes**; API keys or tokens; private folder links; or paths from the owner's devices. Scheduled jobs that write files here must follow this too.
 - Test with synthetic media only: `python3 media-hub/tools/make_demo.py build/demo`. Never open the owner's private media to check a layout.
+- Payout details stay in the owner's Drive. The scanner blocks any file inside a `Payout & Receiving Details` folder, and no flag, header or baseline line can accept it. Don't add exclusions for it.
+- `.gitleaks.toml` has no allowlist. Never allow a folder, a keyword or a pattern there (a Drive-ID pattern also matches inside real tokens); allow one reviewed line with `gitleaks:allow` instead.
 - `.privacy-baseline` lists findings that were reviewed and are safe to publish (test images, an app icon, two owner-only Drive folder IDs). Add a line only after checking that the finding is safe to publish, never to silence a real leak. Private-word lists (`--terms`) stay off the repository.
 - Personal builds of the owner's library go to the owner as files, never as commits or hosted pages.
 - No features built around "nudify" or face-matching services.
@@ -46,7 +48,8 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 | `automation-forge/` | Automation Forge 4.2.1, an Android app in Kotlin, with webhook steps switched off. Debug builds only; not yet tested on a phone. Every check run builds it and keeps the APK as a download. |
 | `MASTER-ORCHESTRATOR-REFERENCE.md` | Design for the voice-first Android stack, about 29.5 KB. If you see a one-line file, it's broken: restore it from git history. |
 | `.claude/skills/media-hub-master/` | Skill with the full working rules, plus tested scripts (server audit, privacy scan, checksums, build splitter) |
-| `scripts/` | `check_repo.py` and `privacy_scan.py`, with their tests |
+| `scripts/` | `check_repo.py` and `privacy_scan.py`, with their tests. The skill keeps an identical copy of `privacy_scan.py`; change both together. |
+| `.githooks/` | Pre-push hook (privacy scan, plus Gitleaks if installed). Install with `git config core.hooksPath .githooks`. |
 | `products/`, `gumroad/`, `skills/` | Products and listings. `python3 products/build_releases.py --out release-out` builds the buyer zips (never commit them). |
 | `docs/` | Handoffs between sessions |
 
@@ -54,6 +57,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
 
 ```bash
 python3 scripts/test_check_repo.py                                   # repository checker
+python3 scripts/test_privacy_scan.py                                 # payout folders fail closed; both scanner copies identical
 python3 .claude/skills/media-hub-master/scripts/test_scripts.py      # privacy scan, checksums, server audit
 python3 products/test_build_releases.py                              # buyer zips (reproducible, privacy-gated)
 python3 -m unittest orchestrator/test_orchestrator.py                 # needs: pip install httpx

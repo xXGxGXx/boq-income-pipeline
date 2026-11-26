@@ -1,28 +1,37 @@
 #!/bin/bash
-# Pre-push hook: run privacy_scan.py before allowing push
-# Install: git config core.hooksPath .githooks
+# Pre-push hook: run the privacy scan (and Gitleaks, if installed) before a push leaves this computer.
+# Install once per clone: git config core.hooksPath .githooks
+# CI runs the same checks on GitHub as a backstop, so a skipped hook is caught there too.
 
-set -euo pipefail
+set -uo pipefail   # no -e: a failing scan must reach the "PUSH BLOCKED" message below, not exit silently
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 SCANNER="$REPO_ROOT/scripts/privacy_scan.py"
 
 if [[ ! -f "$SCANNER" ]]; then
-  echo "ERROR: privacy_scan.py not found at $SCANNER"
+  echo "PUSH BLOCKED: privacy_scan.py not found at $SCANNER"
   exit 1
 fi
 
 echo "Running privacy scan before push..."
-python3 "$SCANNER" --tracked --baseline "$REPO_ROOT/.privacy-baseline"
-SCAN_EXIT=$?
-
-if [[ $SCAN_EXIT -ne 0 ]]; then
+if ! python3 "$SCANNER" --tracked --baseline "$REPO_ROOT/.privacy-baseline"; then
   echo ""
-  echo "PUSH BLOCKED: privacy scan found issues."
-  echo "Fix findings or update .privacy-baseline with documented reasons."
-  echo "Baseline entries must include owner, reason, and expiry date."
+  echo "PUSH BLOCKED: the privacy scan found something new (listed above)."
+  echo "Remove it from the files. Add a line to .privacy-baseline only after checking it is safe to publish."
+  echo "Files in a 'Payout & Receiving Details' folder can never be accepted; remove them."
   exit 1
 fi
 
-echo "Privacy scan clean. Push allowed."
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "Running Gitleaks on the commits being pushed..."
+  if ! gitleaks git "$REPO_ROOT" --config "$REPO_ROOT/.gitleaks.toml" --no-banner --redact --exit-code 1; then
+    echo ""
+    echo "PUSH BLOCKED: Gitleaks found a secret (listed above, redacted). Remove it and rotate the key."
+    exit 1
+  fi
+else
+  echo "Gitleaks not installed here; CI runs it on GitHub."
+fi
+
+echo "Checks clean. Push allowed."
 exit 0

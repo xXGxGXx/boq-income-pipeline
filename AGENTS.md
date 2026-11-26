@@ -12,7 +12,7 @@ For every AI assistant (Claude, ChatGPT/Codex, Grok, Perplexity, Gemini and othe
    python3 scripts/privacy_scan.py --staged   # private material in what you're committing
    ```
 2. Run the tests for what you changed (see [Tests](#tests)) and report the exact numbers you saw.
-3. Every pull request and every push to `main` runs the same checks on GitHub (`.github/workflows/checks.yml`). A red cross on a commit means something broke: open the failed job, fix the file it names, and push again. Don't leave it red.
+3. Every pull request and every push to `main` runs the same checks on GitHub (`.github/workflows/checks.yml`). A red cross on a commit means something broke: open the failed job, fix the file it names, and push again. Don't leave it red. The Media Hub browser job and the Forge build run only when `media-hub/`, the media-hub-master skill, `automation-forge/` or the workflow changed (a skipped job is normal); Actions > checks > Run workflow runs everything.
 4. Fetch `main` first. Someone else may have changed the file since you last read it.
 
 ## Writing files through an API, connector or app

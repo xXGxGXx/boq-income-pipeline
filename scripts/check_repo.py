@@ -17,6 +17,8 @@ Checks
   json         JSON files that don't parse
   shell        shell scripts with syntax errors (bash -n)
   js           JavaScript files with syntax errors (node --check), when Node is installed
+  generated    files that must never be committed even if .gitignore loses its rule: buyer zips in release-out/,
+               APK/AAB builds, signing keystores, .env files and local.properties
 Exit code 0 = all good, 1 = problems listed, 2 = bad usage.
 """
 import argparse, json, os, re, shutil, subprocess, sys, tempfile
@@ -30,6 +32,23 @@ COMMAND_LINE = re.compile(r"^\s*\$\((?:cat|<)\s+[^()]+\)\s*$")
 HIDDEN = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\u200b\u202a-\u202e\u2066-\u2069\ufeff]")   # a BOM is fine only as the first byte
 HIDDEN_NAMES = {"\x0c": "form feed", "\x0b": "vertical tab", "\x00": "NUL", "\x1b": "escape", "\x7f": "DEL",
                 "\u200b": "zero-width space", "\ufeff": "byte-order mark inside the file"}
+# Mirrors the important .gitignore rules, so a force-add or a deleted ignore line still turns the check red.
+NEVER_COMMIT_DIRS = {"release-out": "buyer zip (products are sold, never published here)"}
+NEVER_COMMIT_EXT = {".apk": "app build", ".aab": "app build", ".jks": "signing keystore (secret)", ".keystore": "signing keystore (secret)"}
+
+
+def never_commit(name):
+    """Why this tracked path must not be in the repository, or None."""
+    parts = name.replace("\\", "/").split("/")
+    for d in parts[:-1]:
+        if d in NEVER_COMMIT_DIRS:
+            return NEVER_COMMIT_DIRS[d]
+    base = parts[-1]
+    if base == "local.properties":
+        return "local SDK paths from someone's computer"
+    if base == ".env" or (base.startswith(".env.") and base != ".env.example"):
+        return "environment file (secrets)"
+    return NEVER_COMMIT_EXT.get(os.path.splitext(base)[1].lower())
 
 
 def git(*args, binary=False):
@@ -84,6 +103,9 @@ def check(files, key_files=None):
     has_bash, has_node = shutil.which("bash"), shutil.which("node")
     for name, read in files:
         seen.add(name)
+        why = never_commit(name)
+        if why:
+            add("generated", name, why + "; remove it with git rm --cached and keep its .gitignore rule")
         ext = os.path.splitext(name)[1].lower()
         if ext in BINARY_EXT:
             continue

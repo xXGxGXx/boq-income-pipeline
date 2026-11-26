@@ -8,11 +8,11 @@ Five small Python tools that stop private data and broken files from reaching a 
 ## Start in two minutes
 
 ```bash
-cd privacy-integrity-toolkit-1.0.0
+cd privacy-integrity-toolkit-1.1.0
 python3 test_scripts.py        # 12 tests, synthetic data only
 python3 test_check_repo.py     # 11 tests
 cd /path/to/your/repo
-python3 /path/to/privacy-integrity-toolkit-1.0.0/privacy_scan.py --staged
+python3 /path/to/privacy-integrity-toolkit-1.1.0/privacy_scan.py --staged
 ```
 
 Each tool prints what it found and exits with 0 when everything is clean, so it slots straight into scripts, git hooks and CI.
@@ -30,6 +30,7 @@ Scans files, folders, or git's staged, tracked or historical files. It looks for
 | `cloud` | Google Drive, Docs and Photos, Dropbox, OneDrive, iCloud and MEGA share links, and bare Drive IDs next to the word "drive" or "folder" |
 | `device` | Paths from phones and computers, such as `/storage/emulated/0`, `content://` and `C:\Users\name` |
 | `media`, `catalog`, `large` | Personal photos, video and audio, media catalogs, and oversized files |
+| `payout` | Any file inside a folder named `Payout & Receiving Details`. It always fails: no flag, comment or baseline can accept it. Add your own folder names to `NEVER_PUBLISH_DIRS` |
 | `term` | Your own private words (names, places, project names) from a list you keep outside the repository |
 
 Matches are always masked: bank and card numbers show only their last 2 digits. That means reports and CI logs never republish what they found.
@@ -50,6 +51,7 @@ You can accept a reviewed line by adding `privacy-scan: ok` to it.
 - Finds leftover merge-conflict markers.
 - Finds invisible characters: form feeds, zero-width spaces, and the bidirectional overrides used in "Trojan Source" attacks.
 - Finds Python, JSON, shell and JavaScript syntax errors.
+- Finds files that must never be committed, even if `.gitignore` lost its rule: release zips in `release-out/`, APK and AAB builds, signing keystores, `.env` files and `local.properties`.
 - Finds key documents that were deleted or cut short. List them in `.check-repo.json` (see `examples/check-repo.json`).
 
 ```bash

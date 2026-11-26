@@ -59,7 +59,7 @@ def ndis_office_files():
 
 PRODUCTS = {
     "privacy-integrity-toolkit": {
-        "version": "1.0.0", "date": (2026, 11, 24),
+        "version": "1.1.0", "date": (2026, 11, 26),
         "files": [
             ("scripts/privacy_scan.py", "privacy_scan.py"),
             ("scripts/check_repo.py", "check_repo.py"),

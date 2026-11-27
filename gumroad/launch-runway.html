@@ -202,7 +202,7 @@ tfoot td{font-weight:600;border-bottom:0}
           <div class="sl">
             <label for="affiliate">Affiliates</label><span class="rv" id="affiliateV"></span>
             <input type="range" id="affiliate" min="0" max="80" step="5">
-            <small>Sales through someone else's referral link. They earn the commission set below.</small>
+            <small>Sales through someone else's referral link. They earn the commission set below and carry the same share of Gumroad's fees.</small>
           </div>
           <div class="sl">
             <label for="ramp">Weeks to reach steady sales</label><span class="rv" id="rampV"></span>
@@ -214,13 +214,13 @@ tfoot td{font-weight:600;border-bottom:0}
           <summary>Fees and commission</summary>
           <div class="feegrid">
             <label>Gumroad fee, own links (%)<input class="txt" id="platPct" type="number" min="0" max="100" step="0.1" inputmode="decimal"></label>
-            <label>Gumroad fixed fee per sale ($)<input class="txt" id="platFix" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            <label>Gumroad fixed fee per sale (A$; US$0.50)<input class="txt" id="platFix" type="number" min="0" step="0.01" inputmode="decimal"></label>
             <label>Card processing (%)<input class="txt" id="procPct" type="number" min="0" max="100" step="0.1" inputmode="decimal"></label>
-            <label>Card processing per sale ($)<input class="txt" id="procFix" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            <label>Card processing per sale (A$; US$0.30)<input class="txt" id="procFix" type="number" min="0" step="0.01" inputmode="decimal"></label>
             <label>Discover fee, all-in (%)<input class="txt" id="discPct" type="number" min="0" max="100" step="0.5" inputmode="decimal"></label>
             <label>Affiliate commission (%)<input class="txt" id="affPct" type="number" min="0" max="100" step="1" inputmode="decimal"></label>
           </div>
-          <p class="note">Fee rates change. Check them on Gumroad's pricing page before relying on these numbers. Gumroad collects and remits GST as merchant of record, so this planner doesn't deduct it from your share.</p>
+          <p class="note">Defaults follow Gumroad's published 2026 rates as reported by several fee guides: 10% + US$0.50 per direct sale, card processing on top at about 2.9% + US$0.30, and a flat 30% on Discover sales that already covers processing. The fixed fees are charged in US dollars, so they're shown here converted at about A$1.50 per US$1; change them to match today's rate. Rates change, so check Gumroad's fees page before relying on these numbers. Gumroad collects and remits GST as merchant of record, so this planner doesn't deduct it from your share.</p>
         </details>
       </section>
     </div>
@@ -283,7 +283,7 @@ const EXAMPLE = () => ({
     { id: 4, color: 4, name: 'Governance Bundle', price: 49, wk: 1 }
   ],
   discover: 10, affiliate: 15, ramp: 6, goal: 500, mult: 1,
-  fees: { platPct: 10, platFix: 0.5, procPct: 2.9, procFix: 0.3, discPct: 30, affPct: 35 },
+  fees: { platPct: 10, platFix: 0.75, procPct: 2.9, procFix: 0.45, discPct: 30, affPct: 35 },
   example: true
 });
 let S = load() || EXAMPLE();
@@ -292,6 +292,8 @@ function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
     if (!s || !Array.isArray(s.products) || !s.fees) return null;
+    /* Plans saved before the fixed fees were converted from US$ still hold the old US$ figures. */
+    if (s.fees.platFix === 0.5 && s.fees.procFix === 0.3) { s.fees.platFix = 0.75; s.fees.procFix = 0.45; }
     return s;
   } catch (e) { return null; }
 }
@@ -304,7 +306,8 @@ function netPerSale(p) {
   const f = S.fees, pr = p.price;
   const own = pr - pr * f.platPct / 100 - f.platFix - pr * f.procPct / 100 - f.procFix;
   const disc = pr - pr * f.discPct / 100;
-  const aff = own - pr * f.affPct / 100;
+  /* Gumroad splits fees with the affiliate in proportion to the commission, so the affiliate gets their share of the net. */
+  const aff = own * (1 - f.affPct / 100);
   return (own * direct() + disc * S.discover + aff * S.affiliate) / 100;
 }
 function rampFactor(w) { /* w is 1-based */ if (w >= S.ramp) return 1; return 0.2 + 0.8 * (w - 1) / Math.max(1, S.ramp - 1); }

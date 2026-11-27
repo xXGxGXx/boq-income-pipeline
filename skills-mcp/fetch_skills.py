@@ -10,6 +10,8 @@ SOURCES = [
   ("media-hub-master", "xXGxGXx/boq-income-pipeline", "6806ab9744cf3f5a74f3f96551698811245f9e0b", ".claude/skills/media-hub-master",
    ["SKILL.md", "references/app.md", "references/merging.md", "references/orchestrator.md", "references/originals.md",
     "references/other-skills.md", "references/publishing.md", "references/server.md", "references/testing.md"], "own"),
+  ("clip-desk", "xXGxGXx/boq-income-pipeline", "fb372e372431b37172afc6dbfaa172c4be218a17", "skills/clip-desk",
+   ["SKILL.md"], "own"),
   ("skill-creator", "anthropics/skills", "e4bb5d960d87126ff3b3a8af1a104b7db67560ba", "skills/skill-creator",
    ["SKILL.md", "LICENSE.txt", "references/schemas.md", "agents/analyzer.md", "agents/comparator.md", "agents/grader.md"], "upstream"),
 ]

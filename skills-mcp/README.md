@@ -20,6 +20,8 @@ To update a skill, change the pinned commit in `fetch_skills.py` and redeploy.
 - media-hub-master: `.claude/skills/media-hub-master/` (this repo). media-hub-local, media-retriever,
   media-vault-optimizer and workspace-mirror have no standalone SKILL.md; media-hub-master says it folds them in,
   so those names resolve to it with an explicit note.
+- clip-desk: `skills/clip-desk/` (this repo, branch `skills-mcp-connector`). Instructions only; the tools, library,
+  catalog and rules stay on the box.
 - skill-creator: upstream `anthropics/skills` `skills/skill-creator/` (Apache-2.0, LICENSE.txt bundled).
 
 Limitation: skills that act on local files (media library, workspace mirror) only return instructions through

@@ -14,7 +14,7 @@ const FOLDED: Record<string, string> = {
 };
 
 export const SKILL_NAMES = [
-  "skill-creator", "recall-vault", "media-hub-master",
+  "skill-creator", "recall-vault", "media-hub-master", "clip-desk",
   "media-hub-local", "media-retriever", "media-vault-optimizer", "workspace-mirror",
 ];
 

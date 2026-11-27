@@ -1,5 +1,5 @@
 {
-  "_about": "Module F global allowlist. Only these apps can receive dictated text and a send. Package names must be checked on the phone with `droid-agent state` while the app is open; edit this file, not the code.",
+  "_about": "Module F global allowlist. Only these apps can receive dictated text and a send. Package names are unconfirmed until checked on the phone: open the app and run `python3 -m module_f learn <Name>` to save its real package to ~/.module-f/allowlist.local.json, which overrides this file.",
   "surfaces": [
     {"package": "com.openai.chatgpt", "name": "ChatGPT", "send": "button", "send_labels": ["send", "send message", "send prompt"]},
     {"package": "com.anthropic.claude", "name": "Claude", "send": "button", "send_labels": ["send", "send message"]},
@@ -13,6 +13,7 @@
     "confirm": ["confirm", "yes send it", "yes send"]
   },
   "destructive_words": ["delete", "remove", "merge", "pay", "payment", "transfer", "purchase", "buy", "unsubscribe", "cancel my", "reset", "wipe", "force push"],
+  "vendor_hints": {"openai": "ChatGPT", "chatgpt": "ChatGPT", "anthropic": "Claude", "claude": "Claude", "grok": "Grok", "perplexity": "Perplexity", "gemini": "Gemini", "bard": "Gemini"},
   "max_sends_per_minute": 6,
   "max_chars": 2000
 }

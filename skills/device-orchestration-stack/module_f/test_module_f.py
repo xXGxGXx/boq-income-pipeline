@@ -9,9 +9,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from module_f.backends import KEYCODE_PASTE, TermuxDroidBackend  # noqa: E402
 from module_f.core import (AuditLog, Config, Injector, RateLimiter, StopFlag,  # noqa: E402
-                           is_confirmation, is_destructive, parse, pick_field, pick_send)
+                           comparable, is_confirmation, is_destructive, learn, parse, pick_field,
+                           pick_send, text_landed)
 
-CFG = Config.load()
+CFG = Config.load(local=None)
 
 FIELD = {"ref": 7, "label": "Message", "editable": True, "enabled": True, "clickable": True, "center": [540, 2200]}
 SEARCH = {"ref": 2, "label": "Search chats", "editable": True, "enabled": True, "clickable": True, "center": [540, 150]}
@@ -20,8 +21,9 @@ SCREEN = [SEARCH, FIELD, SEND]
 
 
 class FakeBackend:
-    def __init__(self, pkg="com.openai.chatgpt", screen=SCREEN, answer="confirm"):
-        self.pkg, self.screen, self.answer = pkg, list(screen), answer
+    def __init__(self, pkg="com.openai.chatgpt", screen=SCREEN, answer="confirm", text_lands=True):
+        self.pkg, self.answer, self.text_lands = pkg, answer, text_lands
+        self.screen = [dict(e) for e in screen]
         self.calls, self.spoken = [], []
 
     def foreground(self):
@@ -36,6 +38,10 @@ class FakeBackend:
 
     def inject(self, text):
         self.calls.append(("inject", text))
+        if self.text_lands:   # like a real field: the box now shows the text (droid-agent collapses whitespace)
+            for e in self.screen:
+                if e.get("editable") and e["ref"] == 7:
+                    e["text"] = " ".join(text.split())
 
     def key(self, name):
         self.calls.append(("key", name))
@@ -223,7 +229,7 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(b.actions(), [("tap", 7), ("inject", "hi")])
 
     def test_enter_surface_uses_enter_key(self):
-        cfg = Config.load()
+        cfg = Config.load(local=None)
         cfg.surfaces["com.openai.chatgpt"].send = "enter"
         b = FakeBackend()
         d = Path(tempfile.mkdtemp())
@@ -237,6 +243,76 @@ class Pipeline(unittest.TestCase):
         r = inj.handle("hi press send")
         self.assertEqual((r.ok, r.step), (True, "dry-run"))
         self.assertEqual(b.actions(), [])
+
+
+class Verify(unittest.TestCase):
+    def test_comparable_matches_droid_agent_normalisation(self):
+        self.assertEqual(comparable("  Hi\u200b  there\nfriend "), "hi there friend")
+
+    def test_text_landed(self):
+        box = {"ref": 7, "editable": True, "text": "tell me a joke"}
+        self.assertTrue(text_landed([box], "Tell me a joke"))
+        self.assertTrue(text_landed([dict(box, text="line one line two")], "line one\nline two"))
+        self.assertFalse(text_landed([dict(box, text="")], "tell me a joke"))
+        self.assertFalse(text_landed([dict(box, editable=False)], "tell me a joke"))
+        self.assertFalse(text_landed([box], ""))
+
+    def test_text_that_did_not_land_is_not_sent(self):
+        b = FakeBackend(text_lands=False)
+        inj, _, _ = make(b)
+        r = inj.handle("hello press send")
+        self.assertEqual((r.ok, r.step), (False, "verify"))
+        self.assertNotIn(("tap", 8), b.calls)
+        self.assertIn("didn't send", b.spoken[-1])
+
+    def test_verify_can_be_switched_off_per_app(self):
+        cfg = Config.load(local=None)
+        cfg.surfaces["com.openai.chatgpt"].verify = False
+        b = FakeBackend(text_lands=False)
+        d = Path(tempfile.mkdtemp())
+        inj = Injector(cfg, b, stop=StopFlag(d / "S"), log=AuditLog(d / "a"))
+        self.assertTrue(inj.handle("hello press send").ok)
+
+
+class Learn(unittest.TestCase):
+    def test_learn_copies_settings_and_persists(self):
+        d = Path(tempfile.mkdtemp())
+        local = d / "allowlist.local.json"
+        cfg = Config.load(local=local)
+        surf = learn(cfg, "com.openai.chatgpt.beta", "chatgpt", local=local)
+        self.assertEqual((surf.name, surf.send), ("ChatGPT", "button"))
+        self.assertIn("send prompt", surf.send_labels)
+        again = Config.load(local=local)            # survives a reload
+        self.assertIn("com.openai.chatgpt.beta", again.surfaces)
+        learn(again, "com.openai.chatgpt.beta", "ChatGPT", local=local)   # no duplicates
+        self.assertEqual(len(json.loads(local.read_text())["surfaces"]), 1)
+
+    def test_learn_unknown_name_gets_safe_defaults(self):
+        d = Path(tempfile.mkdtemp())
+        surf = learn(Config.load(local=None), "com.example.chat", "MyChat", local=d / "l.json")
+        self.assertEqual((surf.name, surf.send, surf.verify), ("MyChat", "button", True))
+
+    def test_learn_refuses_termux_itself(self):
+        with self.assertRaises(ValueError) as cm:
+            learn(Config.load(local=None), "com.termux", "ChatGPT", local=Path(tempfile.mkdtemp()) / "l.json")
+        self.assertIn("Termux itself", str(cm.exception))
+
+    def test_learn_refuses_empty_package(self):
+        with self.assertRaises(ValueError):
+            learn(Config.load(local=None), "", "ChatGPT", local=Path(tempfile.mkdtemp()) / "l.json")
+
+    def test_unlisted_lookalike_gets_a_learn_hint(self):
+        b = FakeBackend(pkg="com.openai.chatgpt.beta")
+        inj, _, _ = make(b)
+        r = inj.handle("hi press send")
+        self.assertEqual(r.step, "allowlist")
+        self.assertIn("learn ChatGPT", r.detail)
+        self.assertIn("learn ChatGPT", b.spoken[-1])
+        self.assertEqual(b.actions(), [])
+
+    def test_guess_name(self):
+        self.assertEqual(CFG.guess_name("com.google.android.apps.gemini"), "Gemini")
+        self.assertIsNone(CFG.guess_name("com.android.messaging"))
 
 
 class BackendCommands(unittest.TestCase):

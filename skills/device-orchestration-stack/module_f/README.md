@@ -21,28 +21,38 @@ Every refusal is spoken, so you know nothing was sent.
 
 ## Setup on the phone (Termux)
 
+**1. Install (one command; paste it into Termux):**
+
 ```bash
-pkg install python android-tools termux-api      # plus the Termux:API app from the same source as Termux
-pip install droid-agent
-# Settings > Developer options > Wireless debugging > Pair device with pairing code:
-droid-agent pair 127.0.0.1:PAIR_PORT CODE
-droid-agent connect 127.0.0.1:CONNECT_PORT
-droid-agent state                                  # should print the foreground app
+curl -fsSL https://raw.githubusercontent.com/xXGxGXx/boq-income-pipeline/main/skills/device-orchestration-stack/module_f/install.sh | bash
+```
+
+This installs python, adb (`android-tools`), termux-api and droid-agent. It downloads Module F to `~/.module-f/app` and adds a **`module-f`** command that works from any folder. Run it again any time to update; apps you added with `learn` are kept.
+
+**2. Install the Termux:API app** from the same place you got Termux (F-Droid or GitHub), if it isn't already installed.
+
+**3. Pair adb with the phone itself, once:**
+
+```bash
+# Settings > Developer options > Wireless debugging: switch on, tap "Pair device with pairing code"
+droid-agent pair 127.0.0.1:PAIRING_PORT CODE
+droid-agent connect 127.0.0.1:PORT        # the port shown under "IP address & Port"
+droid-agent state                          # should print the foreground app
 ```
 
 Wireless debugging switches off when the phone changes Wi-Fi network or restarts. Re-run `droid-agent connect` when that happens.
 
 ## Use
 
-Run from `skills/device-orchestration-stack/`:
+After installing, use `module-f` from any folder. In a clone of the repo, `python3 -m module_f` from `skills/device-orchestration-stack/` does the same.
 
 ```bash
-python3 -m module_f check                                # shows app, box, Send button
-python3 -m module_f learn ChatGPT                        # saves the real package name for this app
-python3 -m module_f --dry-run say "hello press send"     # finds everything, types nothing
-python3 -m module_f say "hello press send"               # one message, no microphone
-python3 -m module_f listen                               # speak repeatedly; say "stop" or tap Stop to end
-python3 -m module_f clear-stop                           # lower the stop flag after a stop
+module-f check                                # shows app, box, Send button
+module-f learn ChatGPT                        # saves the real package name for this app
+module-f --dry-run say "hello press send"     # finds everything, types nothing
+module-f say "hello press send"               # one message, no microphone
+module-f listen                               # speak repeatedly; say "stop" or tap Stop to end
+module-f clear-stop                           # lower the stop flag after a stop
 ```
 
 `check`, `learn` and `say` count down 6 seconds before reading the screen (`--wait N` to change). Use that time to switch from Termux to the chat app. Otherwise they read Termux itself, and `learn` refuses that.
@@ -60,6 +70,7 @@ python3 -m module_f clear-stop                           # lower the stop flag a
 | `__main__.py` | The `check` / `say` / `listen` / `clear-stop` commands |
 | `allowlist.json` | Apps, trigger phrases, risky words, vendor hints and limits. Edit this, not the code. Module D syncs it later |
 | `~/.module-f/allowlist.local.json` | On the phone only: apps added with `learn`. Overrides `allowlist.json` |
+| `install.sh` | The one-command Termux installer and the `module-f` launcher |
 | `test_module_f.py` | Tests: `python3 skills/device-orchestration-stack/module_f/test_module_f.py` |
 
 ## Differences from the design

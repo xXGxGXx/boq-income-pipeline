@@ -1,0 +1,18 @@
+{
+  "_about": "Module F global allowlist. Only these apps can receive dictated text and a send. Package names must be checked on the phone with `droid-agent state` while the app is open; edit this file, not the code.",
+  "surfaces": [
+    {"package": "com.openai.chatgpt", "name": "ChatGPT", "send": "button", "send_labels": ["send", "send message", "send prompt"]},
+    {"package": "com.anthropic.claude", "name": "Claude", "send": "button", "send_labels": ["send", "send message"]},
+    {"package": "ai.x.grok", "name": "Grok", "send": "button", "send_labels": ["send", "submit"]},
+    {"package": "com.google.android.apps.bard", "name": "Gemini", "send": "button", "send_labels": ["send", "send message", "submit"]},
+    {"package": "ai.perplexity.app.android", "name": "Perplexity", "send": "button", "send_labels": ["send", "submit", "ask"]}
+  ],
+  "phrases": {
+    "send": ["press send", "hit send", "send it"],
+    "stop": ["stop", "stop module f", "cancel everything"],
+    "confirm": ["confirm", "yes send it", "yes send"]
+  },
+  "destructive_words": ["delete", "remove", "merge", "pay", "payment", "transfer", "purchase", "buy", "unsubscribe", "cancel my", "reset", "wipe", "force push"],
+  "max_sends_per_minute": 6,
+  "max_chars": 2000
+}

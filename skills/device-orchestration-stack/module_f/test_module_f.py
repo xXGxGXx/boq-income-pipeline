@@ -373,5 +373,39 @@ class BackendCommands(unittest.TestCase):
         self.assertIn("termux-api", str(cm.exception))
 
 
+class Installer(unittest.TestCase):
+    HERE = Path(__file__).resolve().parent
+
+    def test_installer_downloads_every_module_file(self):
+        script = (self.HERE / "install.sh").read_text()
+        listed = set(script.split('FILES="', 1)[1].split('"', 1)[0].split())
+        needed = {p.name for p in self.HERE.glob("*.py") if not p.name.startswith("test_")} | {"allowlist.json"}
+        self.assertTrue(needed <= listed, f"install.sh FILES is missing {sorted(needed - listed)}")
+
+    def test_installer_installs_a_working_command(self):
+        import os, shutil, subprocess
+        if not (shutil.which("bash") and shutil.which("curl")):
+            self.skipTest("needs bash and curl")
+        d = Path(tempfile.mkdtemp())
+        env = dict(os.environ, MODULE_F_SKIP_PKG="1", MODULE_F_HOME=str(d / "home"), MODULE_F_BIN=str(d / "bin"),
+                   MODULE_F_SRC=self.HERE.as_uri())
+        subprocess.run(["bash", str(self.HERE / "install.sh")], env=env, check=True, capture_output=True, text=True)
+        out = subprocess.run([str(d / "bin" / "module-f"), "--help"], cwd=str(d), env=env,
+                             check=True, capture_output=True, text=True).stdout
+        self.assertIn("learn", out)
+        again = subprocess.run(["bash", str(self.HERE / "install.sh")], env=env, capture_output=True, text=True)
+        self.assertEqual(again.returncode, 0, again.stderr)   # re-running updates in place
+
+    def test_installer_refuses_outside_termux(self):
+        import os, shutil, subprocess
+        if not shutil.which("bash"):
+            self.skipTest("needs bash")
+        env = {k: v for k, v in os.environ.items() if k != "MODULE_F_SKIP_PKG"}
+        env["PATH"] = str(Path(tempfile.mkdtemp()))  # no pkg here
+        r = subprocess.run([shutil.which("bash"), str(self.HERE / "install.sh")], env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("for Termux", r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

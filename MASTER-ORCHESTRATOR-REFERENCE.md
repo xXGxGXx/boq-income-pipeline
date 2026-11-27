@@ -408,4 +408,14 @@ The branch contains a complete media-hub-master skill (`.claude/skills/media-hub
 
 These practices apply to the media pipeline (Module C), any digital product packs, and cross-assistant merges. The full skill and scripts remain on the branch for direct use.
 
+---
+
+## AI USER EXTENSION (PLAN ADDED 2026-11-27)
+
+The user-facing assistant built on this stack: one panel on the phone and PC that acts on screens (tap, type, dropdowns, tabs, files), searches local, connected and web sources with citations, treats voice and typing as one pipeline, and improves through a measured learning loop.
+
+- **Plan:** `skills/device-orchestration-stack/AI-USER-EXTENSION-PLAN.md`
+- **Sourced research (six domains):** `skills/device-orchestration-stack/research/ai-user-extension-research-2026-11-27.md`
+- **Key changes it proposes (not yet applied):** Mobilerun Portal replaces AccessDroid (404); droid-agent gets a Shizuku `rish` backend; own phone MCP server instead of termux-mcp (no LICENSE file); Module F uses the on-device recogniser with name biasing; Module D and drive-checkpoint stop using this public repository as a fallback for private data; T0–T4 action risk tiers in the orchestrator's gates.
+
 *End of master reference. Paste into any AI platform to continue.*

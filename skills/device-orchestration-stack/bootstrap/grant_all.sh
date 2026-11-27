@@ -28,7 +28,9 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-RISH="${RISH:-rish}"
+if [ -z "${RISH:-}" ]; then
+  if command -v rish >/dev/null 2>&1; then RISH=rish; else RISH="$HOME/bin/rish"; fi   # ~/bin is not on Termux's PATH by default
+fi
 FAILED=()
 say() { printf '%s\n' "$*"; }
 
@@ -52,7 +54,7 @@ step() {  # step "description" "command" "manual fallback"
 }
 
 # ------------------------------------------------------------------ checks
-if ! command -v "$RISH" >/dev/null 2>&1; then
+if ! command -v "$RISH" >/dev/null 2>&1 && [ ! -x "$RISH" ]; then
   say "rish not found. In Shizuku: Use Shizuku in terminal apps > Export, then follow its steps." >&2
   exit 3
 fi
@@ -136,6 +138,8 @@ if [ -n "$PORTAL" ] && has "$PORTAL"; then
     [ -n "$imes" ] && step "enable Portal's keyboard (not switched to it)" "ime enable $imes" "Settings > System > Keyboard > On-screen keyboards > Portal"
     step "allow Portal to draw numbered overlays" "appops set $PORTAL SYSTEM_ALERT_WINDOW allow" "Settings > Apps > Portal > Display over other apps"
     step "exempt Portal from battery optimisation" "dumpsys deviceidle whitelist +$PORTAL"
+    say "  note:  leave Portal's HTTP and WebSocket servers OFF in its app: they listen on every network."
+    say "         The assistant reaches Portal through its ContentProvider via rish instead."
   else
     if [ -n "$a11y" ]; then
       rest=$(printf '%s' "$current" | tr ':' '\n' | grep -vx "$a11y" | paste -sd: -)

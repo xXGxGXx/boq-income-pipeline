@@ -88,9 +88,9 @@ This plan doesn't replace the Master Orchestrator. It is the user-facing product
 | Phone: companion app (Automation Forge) | **The default digital assistant** (summoned from anywhere; reads the screen through the Assist API), mic and push-to-talk, VAD and speech recognition, TTS, the panel, confirmation prompts, the kill switch | Needs Android permissions and a UI; keeps raw audio on the phone; Android 17 wants audio owned by a visible app or foreground service |
 | Phone and PC: MCP gateway | mcp-proxy (pure Python, runs in Termux) in front of every local MCP server, bound to loopback or the Tailscale interface, behind the gatekeeper; Tailscale Aperture later for identity-based grants | One endpoint per machine; nothing on a public interface |
 | Phone: Termux | Phone MCP server (Hands for the phone), local Finder index, FastMap, on-device model calls | Already installed; Shizuku gives it shell-level reach |
-| Phone: Mobilerun Portal APK | Live accessibility tree, numbered overlays, Unicode keyboard | Faster and more complete than `uiautomator dump` |
+| Phone: Mobilerun Portal APK (`com.mobilerun.portal`) | Live accessibility tree, numbered overlays, Unicode keyboard, reached through its ContentProvider via `rish` | Faster and more complete than `uiautomator dump`. Its HTTP and WebSocket servers stay **off**: they listen on every network interface, not just the phone |
 | PC (Windows) | Orchestrator (gatekeeper, router, ledger, job store), Playwright MCP, Windows-MCP, Desktop Commander, the larger Finder index, Claude Agent SDK workers | More CPU, always-on option, browser and Windows control |
-| Network between them | Tailscale only; nothing bound to public interfaces | Phone and PC reach each other privately |
+| Network between them | Tailscale only; nothing bound to public interfaces | Phone and PC reach each other privately. Termux can't firewall without root, so phone servers bind to loopback, or to the Tailscale 100.x address, and also reject peers outside 100.64.0.0/10 |
 | Cloud | Model APIs, Google Workspace MCP, GitHub MCP, web search APIs, optional realtime voice | Only redacted or owner-approved data goes here |
 
 If the PC is off, the phone runs a reduced mode: phone Hands, the phone index, connectors and web search, with the planner called directly from Termux.
@@ -156,7 +156,8 @@ Tried in order, cheapest and most reliable first; the first that works wins, and
 | Run actions | `rish -c "input …"`, `am start`, `cmd package` |
 | Read the screen | **First:** the Assist API snapshot taken when the panel was summoned (no accessibility needed). **While acting:** Mobilerun Portal's live tree and overlays. **Fallback:** `rish -c "uiautomator dump"` and `screencap` (no MediaProjection prompt) |
 | Type any text, including emoji and accents | Portal's keyboard (base64 Unicode) → `ACTION_SET_TEXT` → clipboard + paste |
-| Agent tool layer | droid-agent 0.3.0's tool design (`tap_text`, `type_into`, `wait_for`, `scroll_until`, `--confirm` mode) with a new `rish` backend |
+| Agent tool layer | droid-agent 0.3.0's tool design (`tap_text`, `type_into`, `wait_for`, `scroll_until`, `--confirm` mode) with a new `rish` backend: every adb call goes through `Adb.run()`, `Adb.exec_out()` and `_base()` in `adb.py`, so `shell X` / `exec-out X` become `rish -c X` in one place |
+| Talk to Portal | `rish -c "content query --uri content://com.mobilerun.portal/…"`. Portal's provider accepts only its own app, the shell user (Shizuku) and root, so plain Termux can't reach it and nothing goes over the network | <!-- privacy-scan: ok (public app URI, no personal data) -->
 | Open and close tabs and apps | Intents and `am` first; recents and close buttons through the tree second |
 | Dropdowns | Tap to open, re-read the tree, tap the option, re-read to confirm the value changed |
 | Files and folders | Termux file access under `/sdcard`; `am start` with a content URI to open in the right app; SAF picker for user-granted folders |
@@ -201,7 +202,7 @@ After each action the tool re-reads the tree, page or resource and compares it w
 
 | Source | Stack |
 |---|---|
-| Phone files | SQLite FTS5 + sqlite-vec index of `/sdcard` (Documents, Download, DCIM), EmbeddingGemma embeddings at 256 dimensions, re-indexed incrementally while charging; ripgrep-all as the no-index fallback |
+| Phone files | SQLite FTS5 + sqlite-vec index of shared storage (Documents, Download, DCIM), EmbeddingGemma embeddings at 256 dimensions through `python-onnxruntime` + `python-tokenizers` (both Termux packages), re-indexed incrementally while charging; ripgrep-all (`pkg install ripgrep-all`) as the no-index fallback. sqlite-vec has no Termux wheel: build its `vec0` extension once with `make loadable` (Termux's Python can load extensions); until then, FTS5 plus brute-force vectors in numpy |
 | Photos and video | MobileCLIP-style image embeddings (or PicQuery), keyframes every few seconds for video; transcripts from whisper.cpp or Moonshine with timestamps |
 | PC files | Same index format, larger; Everything (`es.exe`) for instant file names |
 | Cloud accounts | Google Workspace MCP (Drive, Gmail, Calendar), GitHub MCP, Box MCP, read-only scopes |
@@ -236,7 +237,7 @@ Route by task type and sensitivity, not per prompt, and keep each route's system
 
 | Task | Model tier |
 |---|---|
-| Sensitivity tagging, PII redaction, notification triage, anything touching raw private data | On the phone: Gemma 4 E2B on LiteRT-LM, or Gemini Nano where available |
+| Sensitivity tagging, PII redaction, notification triage, anything touching raw private data | On the phone: Gemma 4 E2B on LiteRT-LM **inside the companion app** (LiteRT-LM has no Termux build), or Gemini Nano where available; fallback `pkg install llama-cpp` in Termux on the CPU with a ≤4B Q4 model |
 | FastMap misses, intent extraction, short summaries of redacted text | Haiku 5.5 (or Gemini Flash-Lite) |
 | Tool-using loops: phone, browser and Windows tasks | Sonnet 5.5 (or Gemini 3.5 Flash) |
 | Planning multi-step tasks, code, high-stakes checks | Opus 5.5 |
@@ -374,7 +375,7 @@ The plan uses the default shown until the owner says otherwise.
 
 | Decision | Default in this plan |
 |---|---|
-| Shizuku build: official (manual start after each reboot) or the `thedjchi` fork (start-on-boot, watchdog) | Fork, after reviewing its source |
+| Shizuku build: official (manual start after each reboot) or the `thedjchi` fork (start-on-boot, watchdog) | **Official.** The fork's maintenance is paused (July 2026), it self-updates from GitHub, and switching means uninstalling official Shizuku and re-granting every app |
 | Android Advanced Protection: off (Portal works) or on (Portal revoked; the assistant still sees through the Assist API and acts through Shizuku, more slowly) | Off, with patches kept current; on is workable since round 2 |
 | PC always on, or phone-only most of the time | Both modes supported; PC preferred for heavy work |
 | Monthly cloud budget cap (models + search) | Set before Phase 2; the orchestrator's budget gate enforces it |

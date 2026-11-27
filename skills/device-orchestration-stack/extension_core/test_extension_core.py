@@ -538,11 +538,11 @@ printf '%s\n' "$cmd" >> "$FAKE_LOG"
 case "$cmd" in
   "id -u") echo "${FAKE_UID:-2000}" ;;
   "getprop ro.build.version.sdk") echo 34 ;;
-  "pm list packages") printf 'package:com.termux\npackage:com.droidrun.portal\npackage:com.example.automationforge\npackage:com.commbank.netbank\n' ;;
-  *AccessibilityService*) printf 'com.other.app/.Svc\ncom.droidrun.portal/.PortalA11y\n' ;;
+  "pm list packages") printf 'package:com.termux\npackage:com.mobilerun.portal\npackage:com.example.automationforge\npackage:com.commbank.netbank\n' ;;
+  *AccessibilityService*) printf 'com.other.app/.Svc\ncom.mobilerun.portal/.PortalA11y\n' ;;
   *NotificationListenerService*) echo "com.example.automationforge/.Listener" ;;
   "settings get secure enabled_accessibility_services") echo "${FAKE_A11Y:-com.other.app/.Svc}" ;;
-  "ime list -a -s") printf 'com.google.android.inputmethod.latin/.LatinIME\ncom.droidrun.portal/.Keyboard\n' ;;
+  "ime list -a -s") printf 'com.google.android.inputmethod.latin/.LatinIME\ncom.mobilerun.portal/.Keyboard\n' ;;
   *"cmd role"*) [ -n "${FAKE_ROLE_FAIL:-}" ] && { echo "java.lang.SecurityException: not allowed"; exit 1; } ;;
 esac
 exit 0
@@ -587,20 +587,20 @@ class TestGrantScript(unittest.TestCase):
         r, cmds = self.run_script("--apply")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         a11y = next(c for c in cmds if "enabled_accessibility_services '" in c)
-        self.assertIn("com.other.app/.Svc:com.droidrun.portal/.PortalA11y", a11y)
+        self.assertIn("com.other.app/.Svc:com.mobilerun.portal/.PortalA11y", a11y)
         self.assertIn("cmd role add-role-holder android.app.role.ASSISTANT com.example.automationforge", cmds)
-        self.assertIn("ime enable com.droidrun.portal/.Keyboard", cmds)
+        self.assertIn("ime enable com.mobilerun.portal/.Keyboard", cmds)
         self.assertFalse([c for c in cmds if c.startswith("ime set")], "must not switch the active keyboard")
         self.assertFalse([c for c in cmds if "commbank" in c], "never touches other apps")
         props = (Path(self.tmp.name) / "home" / ".termux" / "termux.properties").read_text()
         self.assertIn("allow-external-apps = true", props)
 
     def test_already_enabled_is_not_duplicated(self):
-        r, cmds = self.run_script("--apply", FAKE_A11Y="com.droidrun.portal/.PortalA11y")
+        r, cmds = self.run_script("--apply", FAKE_A11Y="com.mobilerun.portal/.PortalA11y")
         self.assertFalse([c for c in cmds if "enabled_accessibility_services '" in c])
 
     def test_undo_removes_only_portal(self):
-        r, cmds = self.run_script("--undo", "--apply", FAKE_A11Y="com.other.app/.Svc:com.droidrun.portal/.PortalA11y")
+        r, cmds = self.run_script("--undo", "--apply", FAKE_A11Y="com.other.app/.Svc:com.mobilerun.portal/.PortalA11y")
         a11y = next(c for c in cmds if "enabled_accessibility_services '" in c)
         self.assertIn("'com.other.app/.Svc'", a11y)
         self.assertIn("cmd role remove-role-holder android.app.role.ASSISTANT com.example.automationforge", cmds)

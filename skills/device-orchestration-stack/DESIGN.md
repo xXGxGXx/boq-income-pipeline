@@ -106,6 +106,9 @@ Built from research into Claude Code's internal verification practices, Daisy Ho
 - Not a general-purpose cloud sandbox (E2B) — local-first, privacy-preserving
 
 ### Module F — Voice-to-Chat Injection Overlay (2026-11-23 addition)
+
+> **Build status (2026-11-27):** first build in [`module_f/`](module_f/README.md), not yet run on a phone. It types through droid-agent (adb) instead of AccessDroid/amctl, whose repo returned 404, and instead of `ACTION_SET_TEXT`, since termux-api's accessibility API is unreleased. The README lists every difference from this section.
+
 Built from research into DeVA, Handy AI, voice-droid, PhoneClaw, AccessDroid/amctl, BiBi-Keyboard, and termux-api accessibility work. Gives the user full text-chat capability on any AI platform while retaining voice-chat parity — speak into any chat bar, say "press send," and it fires.
 
 **Core capability:**

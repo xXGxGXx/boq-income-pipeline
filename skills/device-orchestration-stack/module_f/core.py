@@ -11,12 +11,14 @@ import json
 import os
 import re
 import time
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_ALLOWLIST = HERE / "allowlist.json"
 STATE_DIR = Path(os.environ.get("MODULE_F_HOME", Path.home() / ".module-f"))
+LOCAL_ALLOWLIST = STATE_DIR / "allowlist.local.json"   # written by `learn` on the phone
 
 
 # ---------------------------------------------------------------- config
@@ -27,6 +29,20 @@ class Surface:
     name: str
     send: str = "button"          # "button": tap a Send control; "enter": press Enter
     send_labels: list[str] = field(default_factory=lambda: ["send"])
+    verify: bool = True           # re-read the box after typing; don't send if the text isn't there
+
+    def to_json(self) -> dict:
+        return {"package": self.package, "name": self.name, "send": self.send,
+                "send_labels": self.send_labels, "verify": self.verify}
+
+
+def _surface(s: dict) -> Surface:
+    surf = Surface(package=s["package"], name=s["name"], send=s.get("send", "button"),
+                   send_labels=[x.lower() for x in s.get("send_labels", ["send"])],
+                   verify=bool(s.get("verify", True)))
+    if surf.send not in ("button", "enter"):
+        raise ValueError(f"{surf.package}: send must be 'button' or 'enter'")
+    return surf
 
 
 @dataclass
@@ -38,17 +54,16 @@ class Config:
     destructive_words: list[str]
     max_sends_per_minute: int = 6
     max_chars: int = 2000
+    vendor_hints: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def load(cls, path: Path | str = DEFAULT_ALLOWLIST) -> "Config":
+    def load(cls, path: Path | str = DEFAULT_ALLOWLIST, local: Path | str | None = LOCAL_ALLOWLIST) -> "Config":
+        """The shared allowlist, plus apps added on this phone with `learn` (local entries win)."""
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
-        surfaces = {}
-        for s in raw["surfaces"]:
-            surf = Surface(package=s["package"], name=s["name"], send=s.get("send", "button"),
-                           send_labels=[x.lower() for x in s.get("send_labels", ["send"])])
-            if surf.send not in ("button", "enter"):
-                raise ValueError(f"{surf.package}: send must be 'button' or 'enter'")
-            surfaces[surf.package] = surf
+        surfaces = {s["package"]: _surface(s) for s in raw["surfaces"]}
+        if local and Path(local).exists():
+            for s in json.loads(Path(local).read_text(encoding="utf-8")).get("surfaces", []):
+                surfaces[s["package"]] = _surface(s)
         p = raw["phrases"]
         return cls(
             surfaces=surfaces,
@@ -58,7 +73,31 @@ class Config:
             destructive_words=[x.lower() for x in raw.get("destructive_words", [])],
             max_sends_per_minute=int(raw.get("max_sends_per_minute", 6)),
             max_chars=int(raw.get("max_chars", 2000)),
+            vendor_hints={k.lower(): v for k, v in raw.get("vendor_hints", {}).items()},
         )
+
+    def guess_name(self, package: str) -> str | None:
+        """Which chat app an unlisted package probably is, from words in its name."""
+        low = package.lower()
+        return next((name for word, name in self.vendor_hints.items() if word in low), None)
+
+
+def learn(cfg: Config, package: str, name: str, local: Path | str = LOCAL_ALLOWLIST) -> Surface:
+    """Add the app on screen to this phone's allowlist, copying settings from a listed app of the same name."""
+    if not package:
+        raise ValueError("no foreground app reported")
+    if package.startswith("com.termux"):
+        raise ValueError(f"the app on screen is {package} (Termux itself). Switch to the chat app during the countdown")
+    like = next((s for s in cfg.surfaces.values() if s.name.lower() == name.lower()), None)
+    surf = Surface(package=package, name=like.name if like else name, send=like.send if like else "button",
+                   send_labels=list(like.send_labels) if like else ["send"], verify=like.verify if like else True)
+    path = Path(local)
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"surfaces": []}
+    data["surfaces"] = [s for s in data.get("surfaces", []) if s.get("package") != package] + [surf.to_json()]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    cfg.surfaces[package] = surf
+    return surf
 
 
 # --------------------------------------------------------------- fastmap
@@ -140,6 +179,20 @@ def pick_send(elements: list[dict], labels: list[str]) -> dict | None:
     if not hits:
         return None
     return max(hits, key=lambda e: (e.get("center") or [0, 0])[1])
+
+
+_INVISIBLE = re.compile(r"[\u200b-\u200f\u2028-\u202e\u2060-\u2064\ufeff]")
+
+
+def comparable(s: str) -> str:
+    """Normalise like droid-agent does (invisible chars out, whitespace collapsed, NFC), then casefold."""
+    return unicodedata.normalize("NFC", " ".join(_INVISIBLE.sub("", s).split())).casefold()
+
+
+def text_landed(elements: list[dict], typed: str, probe: int = 60) -> bool:
+    """True if an editable field on screen now holds the typed text (its first `probe` chars)."""
+    want = comparable(typed)[:probe]
+    return bool(want) and any(e.get("editable") and want in comparable(str(e.get("text", ""))) for e in elements)
 
 
 # ------------------------------------------------------- guards and log
@@ -241,6 +294,11 @@ class Injector:
         surf = self.cfg.surfaces.get(pkg)
         meta["package"] = pkg
         if surf is None:
+            guess = self.cfg.guess_name(pkg)
+            if guess:
+                return self._end(False, "allowlist", f"{pkg} looks like {guess} but is not listed; run: learn {guess}",
+                                 f"This looks like {guess}, but it isn't on the send list yet. "
+                                 f"Run learn {guess} to add it. Nothing sent.", **meta)
             return self._end(False, "allowlist", f"{pkg} is not on the allowlist",
                              "This app isn't on the send list. Nothing sent.", **meta)
 
@@ -254,6 +312,11 @@ class Injector:
                 return self._end(True, "dry-run", f"would type into ref {fld['ref']} in {surf.name}", None, **meta)
             self.b.tap(fld["ref"])
             self.b.inject(text)
+            if surf.verify:
+                elements = self.b.dump()
+                if not text_landed(elements, text):
+                    return self._end(False, "verify", "typed text not found in any field after typing",
+                                     "I couldn't confirm the text is in the box, so I didn't send it.", **meta)
 
         if is_destructive(text, self.cfg):
             self.b.speak(f"This looks like a {self._which(text)} request. Say confirm to send, or anything else to cancel.")

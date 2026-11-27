@@ -1,0 +1,64 @@
+{
+  "about": "FastMap rules. Tried in this order against every transcript alternative; the first full match wins, so specific rules come before general ones. Each action's risk tier is set in policy.py, never here.",
+  "rules": [
+    {"intent": "stop", "action": "control.stop",
+     "patterns": ["(?:stop|halt|stop everything|kill switch|emergency stop)"]},
+
+    {"intent": "pay", "action": "money.pay",
+     "patterns": ["(?:pay|transfer|send money)(?: to)? (?P<recipient>.+?)(?: (?P<amount>\\$?\\d[\\d.,]*(?: dollars)?))?"]},
+
+    {"intent": "send_message", "action": "message.send",
+     "patterns": ["(?:send|text|message|tell) (?P<recipient>.+?) (?:saying|that|to say) (?P<text>.+)",
+                  "(?:send|text) (?:a )?message to (?P<recipient>.+?) (?:saying|that) (?P<text>.+)"]},
+
+    {"intent": "delete", "action": "file.delete",
+     "patterns": ["(?:delete|remove|trash|erase) (?:the )?(?P<target>.+)"]},
+
+    {"intent": "forget", "action": "memory.forget",
+     "patterns": ["forget (?:that |about )?(?P<fact>.+)"]},
+
+    {"intent": "remember", "action": "memory.write",
+     "patterns": ["remember (?:that )?(?P<fact>.+)", "note that (?P<fact>.+)"]},
+
+    {"intent": "research", "action": "search.research",
+     "patterns": ["(?:research|deep research|dig into|investigate) (?P<query>.+)"]},
+
+    {"intent": "search", "action": "search.query",
+     "patterns": ["(?:search|search for|look up|look for|google|find out|find online) (?P<query>.+)",
+                  "find (?P<query>.+)", "where is (?P<query>.+)"]},
+
+    {"intent": "open_file", "action": "file.open",
+     "patterns": ["open (?:the |my )?(?P<kind>file|folder|document|doc|photo|picture|video|pdf) (?:called |named )?(?P<name>.+)"]},
+
+    {"intent": "new_tab", "action": "browser.tab.open",
+     "patterns": ["(?:open|new) (?:a )?(?:new )?tab(?: (?:for|with|to|on) (?P<query>.+))?"]},
+
+    {"intent": "close_tab", "action": "browser.tab.close",
+     "patterns": ["close (?:this |the |current |that )?tab", "close (?:all )?(?:other )?tabs"]},
+
+    {"intent": "open_menu", "action": "screen.open_menu",
+     "patterns": ["(?:open|show|expand) (?:the )?(?P<target>.+?) (?:dropdown|drop down|menu|list)"]},
+
+    {"intent": "select_option", "action": "screen.select",
+     "patterns": ["(?:choose|pick|select|set) (?P<option>.+?) (?:from|in|on) (?:the )?(?P<target>.+?)(?: dropdown| drop down| menu| list)?"]},
+
+    {"intent": "type_text", "action": "screen.type",
+     "patterns": ["(?:type|write|enter|put) (?P<text>.+?) (?:into the|in the|into|in) (?P<target>.+?)(?: box| field| bar)?",
+                  "(?:type|write) (?P<text>.+)"]},
+
+    {"intent": "scroll", "action": "screen.scroll",
+     "patterns": ["scroll (?P<direction>up|down|left|right)(?: until (?:you see )?(?P<until>.+))?"]},
+
+    {"intent": "back", "action": "screen.back", "patterns": ["(?:go )?back"]},
+    {"intent": "home", "action": "screen.home", "patterns": ["(?:go )?home(?: screen)?"]},
+
+    {"intent": "close_app", "action": "app.close",
+     "patterns": ["(?:close|quit|exit) (?:the )?(?P<app>.+?)(?: app)?"]},
+
+    {"intent": "open_app", "action": "app.open",
+     "patterns": ["(?:open|launch|start) (?:the )?(?P<app>.+?)(?: app)?"]},
+
+    {"intent": "tap", "action": "screen.tap",
+     "patterns": ["(?:tap|press|click|hit|select) (?:on )?(?:the )?(?P<target>.+?)(?: button| link| icon)?"]}
+  ]
+}

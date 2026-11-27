@@ -1,6 +1,6 @@
 # AI User Extension: design plan
 
-**Date:** 2026-11-27 | **Status:** Plan, pre-build | **Extends:** [`DESIGN.md`](DESIGN.md) and [`MASTER-ORCHESTRATOR-REFERENCE.md`](../../MASTER-ORCHESTRATOR-REFERENCE.md) (Layers 1–7, Modules A–I)
+**Date:** 2026-11-27, revised after research round 2 (see §14) | **Status:** Phase 0 built ([`extension_core/`](extension_core/README.md), 82 tests); Phase 1 onward pre-build | **Extends:** [`DESIGN.md`](DESIGN.md) and [`MASTER-ORCHESTRATOR-REFERENCE.md`](../../MASTER-ORCHESTRATOR-REFERENCE.md) (Layers 1–7, Modules A–I)
 **Evidence:** [`research/ai-user-extension-research-2026-11-27.md`](research/ai-user-extension-research-2026-11-27.md). Every tool choice below is backed there with a source; claims the research couldn't confirm are marked there.
 
 ---
@@ -85,7 +85,8 @@ This plan doesn't replace the Master Orchestrator. It is the user-facing product
 
 | Machine | Runs | Why there |
 |---|---|---|
-| Phone: companion app (Automation Forge) | Mic and push-to-talk, VAD and speech recognition, TTS, the floating panel, confirmation prompts, the kill switch | Needs Android permissions and a UI; keeps raw audio on the phone |
+| Phone: companion app (Automation Forge) | **The default digital assistant** (summoned from anywhere; reads the screen through the Assist API), mic and push-to-talk, VAD and speech recognition, TTS, the panel, confirmation prompts, the kill switch | Needs Android permissions and a UI; keeps raw audio on the phone; Android 17 wants audio owned by a visible app or foreground service |
+| Phone and PC: MCP gateway | mcp-proxy (pure Python, runs in Termux) in front of every local MCP server, bound to loopback or the Tailscale interface, behind the gatekeeper; Tailscale Aperture later for identity-based grants | One endpoint per machine; nothing on a public interface |
 | Phone: Termux | Phone MCP server (Hands for the phone), local Finder index, FastMap, on-device model calls | Already installed; Shizuku gives it shell-level reach |
 | Phone: Mobilerun Portal APK | Live accessibility tree, numbered overlays, Unicode keyboard | Faster and more complete than `uiautomator dump` |
 | PC (Windows) | Orchestrator (gatekeeper, router, ledger, job store), Playwright MCP, Windows-MCP, Desktop Commander, the larger Finder index, Claude Agent SDK workers | More CPU, always-on option, browser and Windows control |
@@ -97,6 +98,14 @@ If the PC is off, the phone runs a reduced mode: phone Hands, the phone index, c
 **Protocols:** MCP (2026-07-28 revision, streamable HTTP) for every tool boundary; AGENTS.md and SKILL.md for instructions shared across assistants; native Android notifications for approvals. A2A and AG-UI are skipped until there are outside agents to talk to.
 
 ## 4. Inputs: voice and typing at parity
+
+### 4.0 Summoning the panel (round 2)
+The companion app registers as Android's **default digital assistant** (`VoiceInteractionService`). That one choice gives:
+- **Summon from anywhere:** long-press home, the corner swipe, or long-press power; a headset long-press sends the voice command to the assistant too.
+- **Screen context with no accessibility service:** on every summon the Assist API hands over the screen's structure (text, bounds, IDs, web domain) and a screenshot. "This" and "that" resolve against it. Secure windows (banking, FLAG_SECURE) come back blank, which is the right behaviour.
+- **One panel** with a text box and push-to-talk, so typing and voice start in the same place.
+
+Other ways in, all permission-free or one grant: a Quick Settings tile; the share sheet and the text-selection menu (explicit context, works inside secure apps); a persistent notification with an inline reply box (typed commands from the lock screen); a Bubble for a floating panel. A notification listener feeds incoming notifications as context.
 
 ### 4.1 One pipeline
 Typing produces `InputEvent{confidence: 1, alternatives: [text]}`. Voice produces the same object with the recogniser's alternatives and confidence. Everything after that point (normaliser, router, gates, tools, logs, tests) is shared, so a FastMap rule or a fix works for both.
@@ -145,14 +154,16 @@ Tried in order, cheapest and most reliable first; the first that works wins, and
 |---|---|
 | The single grant | **Shizuku** (official, or the `thedjchi` fork for start-on-boot and a watchdog). Wireless debugging only to start Shizuku |
 | Run actions | `rish -c "input …"`, `am start`, `cmd package` |
-| Read the screen | Mobilerun Portal's local API (live tree, overlays); fallback `rish -c "uiautomator dump"` and `screencap` (no MediaProjection prompt) |
+| Read the screen | **First:** the Assist API snapshot taken when the panel was summoned (no accessibility needed). **While acting:** Mobilerun Portal's live tree and overlays. **Fallback:** `rish -c "uiautomator dump"` and `screencap` (no MediaProjection prompt) |
 | Type any text, including emoji and accents | Portal's keyboard (base64 Unicode) → `ACTION_SET_TEXT` → clipboard + paste |
 | Agent tool layer | droid-agent 0.3.0's tool design (`tap_text`, `type_into`, `wait_for`, `scroll_until`, `--confirm` mode) with a new `rish` backend |
 | Open and close tabs and apps | Intents and `am` first; recents and close buttons through the tree second |
 | Dropdowns | Tap to open, re-read the tree, tap the option, re-read to confirm the value changed |
 | Files and folders | Termux file access under `/sdcard`; `am start` with a content URI to open in the right app; SAF picker for user-granted folders |
 
-Portal needs Accessibility and overlay permission. Shizuku's shell access can switch these on without a Settings visit, so the owner still grants once. That is the first thing to test (§12, Phase 1).
+Portal needs Accessibility and overlay permission. Shizuku's shell access can switch these on without a Settings visit, so the owner still grants once: [`bootstrap/grant_all.sh`](bootstrap/grant_all.sh) makes every grant in one run (dry run by default). Whether Portal answers Termux on localhost is the first thing to test (§12, Phase 1).
+
+If Android 17's Advanced Protection is on, it revokes Portal's accessibility. The assistant still **sees** (Assist API) and still **acts** through Shizuku `input` and `uiautomator`, only slower and without Unicode typing through Portal's keyboard (clipboard + paste covers that).
 
 ### 5.4 Browser
 
@@ -196,6 +207,9 @@ After each action the tool re-reads the tree, page or resource and compares it w
 | Cloud accounts | Google Workspace MCP (Drive, Gmail, Calendar), GitHub MCP, Box MCP, read-only scopes |
 | Web | **Primary:** Brave Search (own index, freshness) and Parallel Search (cheap, accurate). **Multi-hop fallback:** Google-backed results (Gemini grounding or SerpApi). **Inside Claude:** Anthropic web search and web fetch for citations |
 | Past answers | Search history, stored locally and checked first; re-checked when older than the topic's shelf life (about 7 days for prices, 90 days for docs) |
+| Everything else (round 2) | One **source adapter** interface (search, fetch, cite, cost, rate limit, terms flags, where it runs) with a 24-source catalogue in [`extension_core/sources.json`](extension_core/sources.json): YouTube transcripts (run on the phone; cloud IPs are blocked), Gemini for video understanding, xAI `x_search` for X, Hacker News, Reddit (needs approval), RSS through Miniflux, OpenAlex and Crossref, Wikipedia and Wayback, Open-Meteo, Translink real-time, Nominatim, Australian government data, Openverse images. Never face-recognition services |
+| Long tail of apps | n8n (Docker on the PC) through its MCP server, workflows opted in one by one; Zapier MCP only for low-risk actions n8n can't reach |
+| Personal timeline (optional pilot) | screenpipe on the PC only: opt-in, telemetry off, deny list (banking, password managers, private browsing, the media library), encrypted, 14-day retention, read through MCP and logged; never synced |
 
 ### 6.4 Depth levels
 
@@ -255,6 +269,8 @@ The existing orchestrator stays the gatekeeper. Pydantic AI is the suggested lib
 
 Lessons in plain language ("this app hides Send until text is typed") are stored separately with vote counts and expire when unused.
 
+Skills are written in the open `SKILL.md` format, as Hermes Agent does after hard tasks, so Claude, Codex and Gemini can all read them. Hermes's 2026 skill-loading CVEs, and the 341 malicious skills found on OpenClaw's ClawHub, are why every skill here is treated as untrusted code: fingerprinted, approved, and never fetched from a marketplace. Implemented in [`extension_core/skills.py`](extension_core/skills.py).
+
 ### 8.3 Nightly pass
 Consolidate facts and fix contradictions; reflect on the day's failures and propose prompt or skill changes (GEPA-style); nominate L1 candidates; re-index changed files; refresh the capability registry.
 
@@ -307,6 +323,7 @@ The auto-continue loop's stop rule changes from "no improvement named" to "no im
 - Android Advanced Protection blocks unverified apps from the Accessibility API. The owner has to choose: leave it off, or rely on Shizuku paths without Portal. Recorded as an open decision (§13).
 - Secrets live in the Android keystore, environment variables or an egress proxy, never in prompts, logs or this repository (names only, per AGENTS.md).
 - **Kill switch:** one notification action stops the broker, revokes Shizuku for the session, cancels queued jobs and logs out tool tokens.
+- **Lessons from OpenClaw's incidents** (21,000+ exposed gateways, cleartext credentials, one gateway commanding every node): servers bind to loopback by default, auth fails closed, remote links use TLS or Tailscale only, a new device must pair before it can send commands, and a `security audit` command checks all of this and reports.
 
 ### 9.4 Data rules
 - Raw audio, screen contents, notifications, contacts, photos and location stay on the owner's devices.
@@ -343,10 +360,10 @@ Each phase ends with tests that run in CI (no phone needed) plus a short on-phon
 
 | Phase | Builds | Exit criteria |
 |---|---|---|
-| **0. Foundations** | `InputEvent` schema; the T0–T4 policy engine inside the orchestrator's preflight; hash-chained episode log (private path); egress scrubber reusing `privacy_scan.py` rules; personal eval-set format with a held-out split | Unit tests for every tier decision and the scrubber; a test proving a personal query can't reach a web call |
-| **1. Phone Hands** | **First task: test on the phone** that Portal answers Termux on localhost and that Shizuku can enable its accessibility service. Then: phone MCP server in Termux; droid-agent with a `rish` backend; the targeting ladder; verify-after-act; open/close apps and tabs, dropdowns, Unicode typing, open file in app | 30-task phone suite (synthetic data) runs; ≥80% first-try on the owner's phone; Module F moved onto the new Hands |
+| **0. Foundations** ✅ built | [`extension_core/`](extension_core/README.md): `InputEvent`, FastMap over alternatives, name resolution, T0–T4 gate with tool pins, privacy router and scrubber (reusing `privacy_scan.py`), forgettable hash-chained episode log, skill ladder, eval gate with held-out split, model routing, source catalogue. Still to do: call the gate from `orchestrator/`'s preflight | **Met:** 82 unit tests pass, including "a personal query can't reach a web call" |
+| **1. Phone Hands** | **First task: on the phone,** run [`bootstrap/grant_all.sh`](bootstrap/grant_all.sh) in dry-run, then for real, and check that Portal answers Termux on localhost. Then: phone MCP server in Termux; droid-agent with a `rish` backend; the targeting ladder; verify-after-act; open/close apps and tabs, dropdowns, Unicode typing, open file in app | 30-task phone suite (synthetic data) runs; ≥80% first-try on the owner's phone; Module F moved onto the new Hands |
 | **2. Finder** | Local index (FTS5 + sqlite-vec + EmbeddingGemma) on phone and PC; connectors; web broker (Brave + Parallel, Google-backed fallback); `quick` / `check` / `research` depths with the verifier; search history cache | Retrieval tests on synthetic documents; citation-support spot check ≥95%; zero private-data egress in tests |
-| **3. Voice parity** | Companion app in Automation Forge: push-to-talk, on-device recogniser with biasing and alternatives; then Moonshine or sherpa-onnx streaming; Kokoro TTS; repairs and choice questions | Parity eval (same command set typed and spoken, synthetic voices plus real recordings) ≥98%; FastMap path ≤600 ms on the phone |
+| **3. Voice parity** | Companion app in Automation Forge as the default assistant (Assist API snapshot on summon), plus tile, share target and inline-reply notification: push-to-talk, on-device recogniser with biasing and alternatives; then Moonshine or sherpa-onnx streaming; Kokoro TTS; repairs and choice questions | Parity eval (same command set typed and spoken, synthetic voices plus real recordings) ≥98%; FastMap path ≤600 ms on the phone |
 | **4. PC and browser** | Tailscale-only links; Playwright MCP with a separate agent profile; Windows-MCP with an allowlist; Desktop Commander local mode; reduced mode when the PC is off | 20-task browser suite and 10-task Windows suite pass; nothing listens on a public interface (tested) |
 | **5. Learning loop** | Nightly pass; skill ladder L0–L3 with fingerprint approval; bandit router; weekly eval report to private Drive; canary and rollback | A planted regression is caught and rolled back; a planted poisoned memory from web content is rejected |
 | **6. Polish** | Floating panel on the phone and a PC side panel showing the plan, each step and a Stop button; optional wake word; optional Gemini Live conversation mode; media lane scene search and trimming | Owner's acceptance checklist; §10 targets reported with the commit that produced them |
@@ -358,13 +375,33 @@ The plan uses the default shown until the owner says otherwise.
 | Decision | Default in this plan |
 |---|---|
 | Shizuku build: official (manual start after each reboot) or the `thedjchi` fork (start-on-boot, watchdog) | Fork, after reviewing its source |
-| Android Advanced Protection: off (Portal works) or on (no Portal; Shizuku-only paths, slower screen reading) | Off, with patches kept current |
+| Android Advanced Protection: off (Portal works) or on (Portal revoked; the assistant still sees through the Assist API and acts through Shizuku, more slowly) | Off, with patches kept current; on is workable since round 2 |
 | PC always on, or phone-only most of the time | Both modes supported; PC preferred for heavy work |
 | Monthly cloud budget cap (models + search) | Set before Phase 2; the orchestrator's budget gate enforces it |
 | Web search keys to buy | Brave (free monthly credit) first, Parallel second |
 | Optional cloud extras (Base44, Desktop Commander hosted relay, realtime voice) | Off until asked, and T2-gated when on |
 
-## 14. Not in scope
+## 14. What research round 2 changed
+
+Round 2 looked at what round 1 missed: how the owner summons the assistant and how it sees context, existing projects worth borrowing from, content sources beyond general web search, and whether each piece really runs in Termux. Evidence: research digest §7–§10.
+
+| Area | Round 1 plan | After round 2 | Why |
+|---|---|---|---|
+| Summoning and seeing | Floating panel; screen read through Portal's accessibility tree | Companion app is the **default digital assistant**; the Assist API gives screen structure and a screenshot on every summon; Portal used only to act | No accessibility needed to see; survives Advanced Protection; summon from anywhere |
+| The single grant | Shizuku, with Portal's accessibility enabled through it | One script, [`bootstrap/grant_all.sh`](bootstrap/grant_all.sh), makes every grant through Shizuku (assistant role, restricted settings, accessibility, keyboard, notification listener, overlay, runtime permissions, battery and phantom-process exemptions) | Fewer manual steps; repeatable after a reinstall |
+| Tool endpoint | "Own small MCP server" | mcp-proxy as the gateway on phone and PC now; Aperture later; our gateway also added to the Claude apps as a custom connector | Proven, pure Python, runs in Termux; Claude mobile reaches the same tools |
+| Skills | Own format | `SKILL.md` (open standard, Hermes-style learn-after-success), still behind the fingerprint gate | Portable across assistants; marketplace skills proved dangerous |
+| Security | Risk tiers, taint, pins | Plus OpenClaw's lessons: loopback by default, fail-closed auth, device pairing, a `security audit` command | Real incidents in 2026 |
+| Sources | Web, local, Workspace, GitHub | Plus a 24-source adapter catalogue (video, social, academic, news, Queensland transport and government data, licensed images) | "Search everything" means every content type, each with its cost and terms |
+| Long tail | Unspecified automation hub | n8n in Docker on the PC; Zapier MCP for low-risk gaps | Self-hosted, MCP both ways |
+| Memory of what was on screen | Not covered | Optional PC-only screenpipe pilot with strict exclusions | Useful recall; risky, so opt-in and local |
+| Phase 0 | Planned | **Built and tested** | — |
+
+## 15. Steps only the owner can take
+
+The checklist is in [`SETUP-MANUAL-STEPS.md`](SETUP-MANUAL-STEPS.md): every step that needs a person's hands on the phone, the PC or an account, in order, with what the assistant automates around each.
+
+## 16. Not in scope
 
 - Anything at tier T4 (payments, transfers, passwords, 2FA): the assistant drafts, the owner acts.
 - Solving CAPTCHAs: handed to the owner.

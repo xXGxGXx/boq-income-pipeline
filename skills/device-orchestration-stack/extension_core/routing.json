@@ -1,0 +1,17 @@
+{
+  "about": "Task type -> model tier. 'private' overrides every task: raw private data stays on the phone. Model ids are examples to confirm against each provider's current list before use.",
+  "default": "agent_loop",
+  "routes": {
+    "private":       {"models": ["gemma-4-e2b-litert", "gemini-nano"], "on_device": true},
+    "triage":        {"models": ["gemma-4-e2b-litert", "claude-haiku-5-5"], "on_device": true},
+    "intent":        {"models": ["claude-haiku-5-5", "gemini-3.5-flash-lite"], "on_device": false},
+    "summarise":     {"models": ["claude-haiku-5-5", "gemini-3.5-flash-lite"], "on_device": false},
+    "agent_loop":    {"models": ["claude-sonnet-5-5", "gemini-3.5-flash"], "on_device": false},
+    "plan":          {"models": ["claude-opus-5-5"], "on_device": false},
+    "code":          {"models": ["claude-opus-5-5", "claude-sonnet-5-5"], "on_device": false},
+    "verify":        {"models": ["claude-opus-5-5"], "on_device": false},
+    "second_opinion":{"models": ["claude-fable-5-2", "gpt-5.5"], "on_device": false},
+    "social_live":   {"models": ["grok-4.7"], "on_device": false},
+    "cited_answer":  {"models": ["perplexity-sonar"], "on_device": false}
+  }
+}

@@ -83,6 +83,8 @@ jobs:
         run: python3 artifacts/test_orchestrator.py
       - name: Module F voice-to-chat injection (standard library only; no phone or adb needed)
         run: python3 skills/device-orchestration-stack/module_f/test_module_f.py
+      - name: AI User Extension core (standard library only; no phone, network or keys)
+        run: python3 skills/device-orchestration-stack/extension_core/test_extension_core.py
       - name: Media Hub unit and server tests (synthetic demo media only)
         working-directory: media-hub
         run: |

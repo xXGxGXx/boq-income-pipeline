@@ -1,0 +1,29 @@
+{
+  "about": "Finder's source catalogue (research round 2, 2026-11-27). needs_key is an environment variable NAME; values never go in this repository. Costs and limits are as researched and should be re-checked before relying on them. priority: 1 = build first.",
+  "sources": [
+    {"id": "local_index", "content": ["files", "documents", "photos", "video", "audio", "notes", "history"], "needs_key": null, "cost": "free", "rate_limit": "none", "tos": ["personal_only"], "runs_on": ["termux", "pc"], "priority": 1, "scope": "personal"},
+    {"id": "google_drive", "content": ["files", "documents"], "needs_key": "GOOGLE_WORKSPACE_OAUTH", "cost": "free (quota)", "rate_limit": "Workspace API quotas", "tos": ["personal_only"], "runs_on": ["cloud"], "priority": 1, "scope": "personal"},
+    {"id": "gmail", "content": ["email", "attachments"], "needs_key": "GOOGLE_WORKSPACE_OAUTH", "cost": "free (quota)", "rate_limit": "Workspace API quotas", "tos": ["personal_only"], "runs_on": ["cloud"], "priority": 1, "scope": "personal"},
+    {"id": "google_calendar", "content": ["calendar"], "needs_key": "GOOGLE_WORKSPACE_OAUTH", "cost": "free (quota)", "rate_limit": "Workspace API quotas", "tos": ["personal_only"], "runs_on": ["cloud"], "priority": 2, "scope": "personal"},
+    {"id": "github", "content": ["code", "issues"], "needs_key": "GITHUB_TOKEN", "cost": "free", "rate_limit": "about 10 code searches/min", "tos": [], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "brave_search", "content": ["web", "news"], "needs_key": "BRAVE_SEARCH_API_KEY", "cost": "about $5 per 1k (monthly credit)", "rate_limit": "up to 50 req/s", "tos": [], "runs_on": ["cloud"], "priority": 1, "scope": "public"},
+    {"id": "parallel_search", "content": ["web"], "needs_key": "PARALLEL_API_KEY", "cost": "$1-5 per 1k", "rate_limit": "unverified", "tos": [], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "google_grounding", "content": ["web"], "needs_key": "GEMINI_API_KEY", "cost": "5k free/month then about $14 per 1k", "rate_limit": "per project", "tos": [], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "wikipedia", "content": ["reference"], "needs_key": null, "cost": "free", "rate_limit": "global limits; identify with a User-Agent", "tos": ["attribution"], "runs_on": ["cloud"], "priority": 1, "scope": "public"},
+    {"id": "wayback", "content": ["reference", "web"], "needs_key": null, "cost": "free", "rate_limit": "be polite", "tos": [], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "youtube_transcripts", "content": ["video"], "needs_key": null, "cost": "free", "rate_limit": "cloud IPs blocked; run on the phone", "tos": ["no_download"], "runs_on": ["termux"], "priority": 1, "scope": "public"},
+    {"id": "youtube_data", "content": ["video"], "needs_key": "YOUTUBE_API_KEY", "cost": "free (10k units/day; search 100 units)", "rate_limit": "daily quota", "tos": ["no_download"], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "x_search", "content": ["social", "news"], "needs_key": "XAI_API_KEY", "cost": "about $5 per 1k posts + tokens", "rate_limit": "per account", "tos": ["paid_per_item"], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "hacker_news", "content": ["social", "news"], "needs_key": null, "cost": "free", "rate_limit": "generous (unverified)", "tos": [], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "reddit", "content": ["social"], "needs_key": "REDDIT_CLIENT_ID", "cost": "free for personal use", "rate_limit": "about 100 req/min", "tos": ["approval_needed"], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "rss_miniflux", "content": ["news"], "needs_key": "MINIFLUX_TOKEN", "cost": "free (self-hosted)", "rate_limit": "none", "tos": [], "runs_on": ["pc"], "priority": 2, "scope": "public"},
+    {"id": "openalex", "content": ["academic"], "needs_key": "OPENALEX_API_KEY", "cost": "free daily allowance", "rate_limit": "credit-based", "tos": [], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "crossref", "content": ["academic"], "needs_key": null, "cost": "free", "rate_limit": "polite pool with mailto", "tos": [], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "podcast_index", "content": ["audio"], "needs_key": "PODCASTINDEX_API_KEY", "cost": "free", "rate_limit": "unverified", "tos": [], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "open_meteo", "content": ["weather"], "needs_key": null, "cost": "free (non-commercial)", "rate_limit": "under 10k/day", "tos": ["attribution"], "runs_on": ["cloud"], "priority": 2, "scope": "public"},
+    {"id": "translink_gtfs_rt", "content": ["transport"], "needs_key": null, "cost": "free", "rate_limit": "none stated", "tos": ["attribution"], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "nominatim", "content": ["places"], "needs_key": null, "cost": "free", "rate_limit": "1 req/s, identify with a User-Agent", "tos": ["attribution"], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "au_gov_data", "content": ["data", "reference"], "needs_key": null, "cost": "free", "rate_limit": "none stated", "tos": ["attribution"], "runs_on": ["cloud"], "priority": 3, "scope": "public"},
+    {"id": "openverse", "content": ["images"], "needs_key": null, "cost": "free", "rate_limit": "anonymous limits", "tos": ["attribution"], "runs_on": ["cloud"], "priority": 3, "scope": "public"}
+  ]
+}

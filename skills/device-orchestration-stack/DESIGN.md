@@ -1,6 +1,8 @@
 # Device Orchestration Stack — Design Doc
 **Locked:** 2026-11-23 | **Status:** Design phase, pre-build (optimized + extended + code interpreter + voice-to-chat overlay + screen grid input + single-grant architecture + semantic memory + auto-fail-resolution + AI-side watchdog + meta-improvement engine)
 
+> **2026-11-27:** the user-facing product built on this stack, the "AI User Extension", is planned in [`AI-USER-EXTENSION-PLAN.md`](AI-USER-EXTENSION-PLAN.md), with sourced research in [`research/`](research/ai-user-extension-research-2026-11-27.md). Its §11 proposes changes to this document (Module D, F and H, the auto-continue loop); none are applied here yet.
+
 ## Goal
 A voice-first, minimal-fail-point orchestration layer combining the best non-conflicting parts of Termux, PyDroid, Media Commander, Voice Commander, Desktop Commander, Base44, and user-made designs into one system. Not a literal merge of every feature — only the parts that work well together and fill each other's gaps. Hypothetical master name: **Master Orchestrator**.
 
